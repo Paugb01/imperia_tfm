@@ -17,4 +17,8 @@ Now you should be able to connect to the database through your SQL client, such 
 ### There are still few issues to address:
 - The punto_venta table is not being loaded its data for problems related to the primary key.
 - A way of including all the data and csv files should be found.
+
+## Next steps:
+- Connect the notebook to the database and start an EDA taking that connection as the input is the current idea.
+- Find feasible or more convenient alternatives to deploying a db. Otherwise, decide and implement the DB either on cloud or on local servers according to what might be more convenient. 
   

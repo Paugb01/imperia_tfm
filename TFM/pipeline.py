@@ -2,6 +2,18 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 import csv
 import logging
+import os
+from dotenv import load_dotenv
+
+# Set env variables
+load_dotenv()
+bucket = os.getenv("BUCKET")
+region = os.getenv("REGION")
+project = os.getenv("PROJECT_ID")
+credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+# Set Google Application Credentials
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 
 class ParseCSV(beam.DoFn):
     def __init__(self):
@@ -30,11 +42,12 @@ class ParseCSV(beam.DoFn):
 def run():
     # Configuración de las opciones del pipeline
     pipeline_options = {
-        'project': 'pakotinaikos',
-        'region': 'europe-southwest1',
+        'project': project,
+        'region': region,
         'runner': 'DataflowRunner',
-        'temp_location': 'gs://bucket_1_tfm/temp',
-        'staging_location': 'gs://bucket_1_tfm/staging',
+        'temp_location': f'{bucket}/tmp',
+        'staging_location':  f'{bucket}/staging',
+        'requirements_file': 'requirements.txt',
         'save_main_session': True  # Esta es la opción clave
     }
 
@@ -45,10 +58,10 @@ def run():
     # Definición del pipeline
     with beam.Pipeline(options=options) as p:
         (p
-         | 'ReadFromGCS' >> beam.io.ReadFromText('gs://bucket_1_tfm/historico_ventas.csv')
+         | 'ReadFromGCS' >> beam.io.ReadFromText( f'{bucket}/historico_ventas.csv')
          | 'ParseCSV' >> beam.ParDo(ParseCSV())
          | 'WriteToBigQuery' >> beam.io.WriteToBigQuery(
-                table='pakotinaikos.tfm_dataset.historico_ventas',
+                table=f'{project}.tfm_dataset.historico_ventas',
                 schema='Id_Producto:STRING, Cliente:STRING, Punto_de_Venta:STRING, Fecha:DATE, Ventas:FLOAT',
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
                 create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED

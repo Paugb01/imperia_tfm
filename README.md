@@ -22,3 +22,6 @@ Now you should be able to connect to the database through your SQL client, such 
 - Connect the notebook to the database and start an EDA taking that connection as the input is the current idea.
 - Find feasible or more convenient alternatives to deploying a db. Otherwise, decide and implement the DB either on cloud or on local servers according to what might be more convenient. 
   
+
+## API Deployment (JAVI)
+Desde la carpeta TFM/Deploy, ejecutar `docker build -t modelo-ventas3 . ` para construir el contenedor y luego runear `docker run -p 5000:5000 modelo-ventas3` . Una vez hecho, se puede testear la API en http://127.0.0.1:5000 (localhost).

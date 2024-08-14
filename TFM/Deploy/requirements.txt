@@ -4,3 +4,4 @@ flask
 joblib
 numpy
 gunicorn
+streamlit

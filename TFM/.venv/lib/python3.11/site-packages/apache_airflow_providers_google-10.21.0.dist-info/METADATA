@@ -1,0 +1,316 @@
+Metadata-Version: 2.1
+Name: apache-airflow-providers-google
+Version: 10.21.0
+Summary: Provider package apache-airflow-providers-google for Apache Airflow
+Keywords: airflow-provider,google,airflow,integration
+Author-email: Apache Software Foundation <dev@airflow.apache.org>
+Maintainer-email: Apache Software Foundation <dev@airflow.apache.org>
+Requires-Python: ~=3.8
+Description-Content-Type: text/x-rst
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Framework :: Apache Airflow
+Classifier: Framework :: Apache Airflow :: Provider
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: System :: Monitoring
+Requires-Dist: PyOpenSSL>=23.0.0
+Requires-Dist: apache-airflow-providers-common-sql>=1.7.2
+Requires-Dist: apache-airflow>=2.7.0
+Requires-Dist: asgiref>=3.5.2
+Requires-Dist: dill>=0.2.3
+Requires-Dist: gcloud-aio-auth>=4.0.0,<5.0.0
+Requires-Dist: gcloud-aio-bigquery>=6.1.2
+Requires-Dist: gcloud-aio-storage>=9.0.0
+Requires-Dist: gcsfs>=2023.10.0
+Requires-Dist: google-ads>=24.1.0
+Requires-Dist: google-analytics-admin>=0.9.0
+Requires-Dist: google-api-core>=2.11.0,!=2.16.0,!=2.18.0
+Requires-Dist: google-api-python-client>=2.0.2
+Requires-Dist: google-auth-httplib2>=0.0.1
+Requires-Dist: google-auth>=2.29.0
+Requires-Dist: google-cloud-aiplatform>=1.57.0
+Requires-Dist: google-cloud-automl>=2.12.0
+Requires-Dist: google-cloud-batch>=0.13.0
+Requires-Dist: google-cloud-bigquery-datatransfer>=3.13.0
+Requires-Dist: google-cloud-bigquery<3.21.0,>=3.4.0
+Requires-Dist: google-cloud-bigtable>=2.17.0
+Requires-Dist: google-cloud-build>=3.22.0
+Requires-Dist: google-cloud-compute>=1.10.0
+Requires-Dist: google-cloud-container>=2.17.4
+Requires-Dist: google-cloud-datacatalog>=3.11.1
+Requires-Dist: google-cloud-dataflow-client>=0.8.6
+Requires-Dist: google-cloud-dataform>=0.5.0
+Requires-Dist: google-cloud-dataplex>=1.10.0
+Requires-Dist: google-cloud-dataproc-metastore>=1.12.0
+Requires-Dist: google-cloud-dataproc>=5.8.0
+Requires-Dist: google-cloud-dlp>=3.12.0
+Requires-Dist: google-cloud-kms>=2.15.0
+Requires-Dist: google-cloud-language>=2.9.0
+Requires-Dist: google-cloud-logging>=3.5.0
+Requires-Dist: google-cloud-memcache>=1.7.0
+Requires-Dist: google-cloud-monitoring>=2.18.0
+Requires-Dist: google-cloud-orchestration-airflow>=1.10.0
+Requires-Dist: google-cloud-os-login>=2.9.1
+Requires-Dist: google-cloud-pubsub>=2.19.0
+Requires-Dist: google-cloud-redis>=2.12.0
+Requires-Dist: google-cloud-run>=0.10.0
+Requires-Dist: google-cloud-secret-manager>=2.16.0
+Requires-Dist: google-cloud-spanner>=3.11.1
+Requires-Dist: google-cloud-speech>=2.18.0
+Requires-Dist: google-cloud-storage-transfer>=1.4.1
+Requires-Dist: google-cloud-storage>=2.7.0
+Requires-Dist: google-cloud-tasks>=2.13.0
+Requires-Dist: google-cloud-texttospeech>=2.14.1
+Requires-Dist: google-cloud-translate>=3.11.0
+Requires-Dist: google-cloud-videointelligence>=2.11.0
+Requires-Dist: google-cloud-vision>=3.4.0
+Requires-Dist: google-cloud-workflows>=1.10.0
+Requires-Dist: grpcio-gcp>=0.2.2
+Requires-Dist: httpx>=0.25.0
+Requires-Dist: json-merge-patch>=0.2
+Requires-Dist: looker-sdk>=22.4.0
+Requires-Dist: pandas-gbq>=0.7.0
+Requires-Dist: pandas>=1.5.3,<2.2;python_version<"3.9"
+Requires-Dist: pandas>=2.1.2,<2.2;python_version>="3.9"
+Requires-Dist: proto-plus>=1.19.6
+Requires-Dist: python-slugify>=7.0.0
+Requires-Dist: sqlalchemy-bigquery>=1.2.1
+Requires-Dist: sqlalchemy-spanner>=1.6.2
+Requires-Dist: tenacity>=8.1.0
+Requires-Dist: apache-airflow-providers-amazon>=2.6.0 ; extra == "amazon"
+Requires-Dist: apache-airflow-providers-apache-beam ; extra == "apache.beam"
+Requires-Dist: apache-beam[gcp] ; extra == "apache.beam"
+Requires-Dist: apache-airflow-providers-apache-cassandra ; extra == "apache.cassandra"
+Requires-Dist: apache-airflow-providers-cncf-kubernetes>=7.2.0 ; extra == "cncf.kubernetes"
+Requires-Dist: apache-airflow-providers-common-sql ; extra == "common.sql"
+Requires-Dist: apache-airflow-providers-facebook>=2.2.0 ; extra == "facebook"
+Requires-Dist: plyvel ; extra == "leveldb"
+Requires-Dist: apache-airflow-providers-microsoft-azure ; extra == "microsoft.azure"
+Requires-Dist: apache-airflow-providers-microsoft-mssql ; extra == "microsoft.mssql"
+Requires-Dist: apache-airflow-providers-mysql ; extra == "mysql"
+Requires-Dist: apache-airflow-providers-openlineage ; extra == "openlineage"
+Requires-Dist: apache-airflow-providers-oracle>=3.1.0 ; extra == "oracle"
+Requires-Dist: apache-airflow-providers-postgres ; extra == "postgres"
+Requires-Dist: apache-airflow-providers-presto ; extra == "presto"
+Requires-Dist: apache-airflow-providers-salesforce ; extra == "salesforce"
+Requires-Dist: apache-airflow-providers-sftp ; extra == "sftp"
+Requires-Dist: apache-airflow-providers-ssh ; extra == "ssh"
+Requires-Dist: apache-airflow-providers-trino ; extra == "trino"
+Project-URL: Bug Tracker, https://github.com/apache/airflow/issues
+Project-URL: Changelog, https://airflow.apache.org/docs/apache-airflow-providers-google/10.21.0/changelog.html
+Project-URL: Documentation, https://airflow.apache.org/docs/apache-airflow-providers-google/10.21.0
+Project-URL: Slack Chat, https://s.apache.org/airflow-slack
+Project-URL: Source Code, https://github.com/apache/airflow
+Project-URL: Twitter, https://twitter.com/ApacheAirflow
+Project-URL: YouTube, https://www.youtube.com/channel/UCSXwxpWZQ7XZ1WL3wqevChA/
+Provides-Extra: amazon
+Provides-Extra: apache.beam
+Provides-Extra: apache.cassandra
+Provides-Extra: cncf.kubernetes
+Provides-Extra: common.sql
+Provides-Extra: facebook
+Provides-Extra: leveldb
+Provides-Extra: microsoft.azure
+Provides-Extra: microsoft.mssql
+Provides-Extra: mysql
+Provides-Extra: openlineage
+Provides-Extra: oracle
+Provides-Extra: postgres
+Provides-Extra: presto
+Provides-Extra: salesforce
+Provides-Extra: sftp
+Provides-Extra: ssh
+Provides-Extra: trino
+
+
+.. Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements.  See the NOTICE file
+   distributed with this work for additional information
+   regarding copyright ownership.  The ASF licenses this file
+   to you under the Apache License, Version 2.0 (the
+   "License"); you may not use this file except in compliance
+   with the License.  You may obtain a copy of the License at
+
+..   http://www.apache.org/licenses/LICENSE-2.0
+
+.. Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.
+
+ .. Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+ ..   http://www.apache.org/licenses/LICENSE-2.0
+
+ .. Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+ .. NOTE! THIS FILE IS AUTOMATICALLY GENERATED AND WILL BE
+    OVERWRITTEN WHEN PREPARING PACKAGES.
+
+ .. IF YOU WANT TO MODIFY TEMPLATE FOR THIS FILE, YOU SHOULD MODIFY THE TEMPLATE
+    `PROVIDER_README_TEMPLATE.rst.jinja2` IN the `dev/breeze/src/airflow_breeze/templates` DIRECTORY
+
+
+Package ``apache-airflow-providers-google``
+
+Release: ``10.21.0``
+
+
+Google services including:
+
+  - `Google Ads <https://ads.google.com/>`__
+  - `Google Cloud (GCP) <https://cloud.google.com/>`__
+  - `Google Firebase <https://firebase.google.com/>`__
+  - `Google LevelDB <https://github.com/google/leveldb/>`__
+  - `Google Marketing Platform <https://marketingplatform.google.com/>`__
+  - `Google Workspace <https://workspace.google.com/>`__ (formerly Google Suite)
+
+
+Provider package
+----------------
+
+This is a provider package for ``google`` provider. All classes for this provider package
+are in ``airflow.providers.google`` python package.
+
+You can find package information and changelog for the provider
+in the `documentation <https://airflow.apache.org/docs/apache-airflow-providers-google/10.21.0/>`_.
+
+Installation
+------------
+
+You can install this package on top of an existing Airflow 2 installation (see ``Requirements`` below
+for the minimum Airflow version supported) via
+``pip install apache-airflow-providers-google``
+
+The package supports the following python versions: 3.8,3.9,3.10,3.11,3.12
+
+Requirements
+------------
+
+=======================================  =========================================
+PIP package                              Version required
+=======================================  =========================================
+``apache-airflow``                       ``>=2.7.0``
+``apache-airflow-providers-common-sql``  ``>=1.7.2``
+``asgiref``                              ``>=3.5.2``
+``dill``                                 ``>=0.2.3``
+``gcloud-aio-auth``                      ``>=4.0.0,<5.0.0``
+``gcloud-aio-bigquery``                  ``>=6.1.2``
+``gcloud-aio-storage``                   ``>=9.0.0``
+``gcsfs``                                ``>=2023.10.0``
+``google-ads``                           ``>=24.1.0``
+``google-analytics-admin``               ``>=0.9.0``
+``google-api-core``                      ``>=2.11.0,!=2.16.0,!=2.18.0``
+``google-api-python-client``             ``>=2.0.2``
+``google-auth``                          ``>=2.29.0``
+``google-auth-httplib2``                 ``>=0.0.1``
+``google-cloud-aiplatform``              ``>=1.57.0``
+``google-cloud-automl``                  ``>=2.12.0``
+``google-cloud-bigquery``                ``<3.21.0,>=3.4.0``
+``google-cloud-bigquery-datatransfer``   ``>=3.13.0``
+``google-cloud-bigtable``                ``>=2.17.0``
+``google-cloud-build``                   ``>=3.22.0``
+``google-cloud-compute``                 ``>=1.10.0``
+``google-cloud-container``               ``>=2.17.4``
+``google-cloud-datacatalog``             ``>=3.11.1``
+``google-cloud-dataflow-client``         ``>=0.8.6``
+``google-cloud-dataform``                ``>=0.5.0``
+``google-cloud-dataplex``                ``>=1.10.0``
+``google-cloud-dataproc``                ``>=5.8.0``
+``google-cloud-dataproc-metastore``      ``>=1.12.0``
+``google-cloud-dlp``                     ``>=3.12.0``
+``google-cloud-kms``                     ``>=2.15.0``
+``google-cloud-language``                ``>=2.9.0``
+``google-cloud-logging``                 ``>=3.5.0``
+``google-cloud-memcache``                ``>=1.7.0``
+``google-cloud-monitoring``              ``>=2.18.0``
+``google-cloud-orchestration-airflow``   ``>=1.10.0``
+``google-cloud-os-login``                ``>=2.9.1``
+``google-cloud-pubsub``                  ``>=2.19.0``
+``google-cloud-redis``                   ``>=2.12.0``
+``google-cloud-secret-manager``          ``>=2.16.0``
+``google-cloud-spanner``                 ``>=3.11.1``
+``google-cloud-speech``                  ``>=2.18.0``
+``google-cloud-storage``                 ``>=2.7.0``
+``google-cloud-storage-transfer``        ``>=1.4.1``
+``google-cloud-tasks``                   ``>=2.13.0``
+``google-cloud-texttospeech``            ``>=2.14.1``
+``google-cloud-translate``               ``>=3.11.0``
+``google-cloud-videointelligence``       ``>=2.11.0``
+``google-cloud-vision``                  ``>=3.4.0``
+``google-cloud-workflows``               ``>=1.10.0``
+``google-cloud-run``                     ``>=0.10.0``
+``google-cloud-batch``                   ``>=0.13.0``
+``grpcio-gcp``                           ``>=0.2.2``
+``httpx``                                ``>=0.25.0``
+``json-merge-patch``                     ``>=0.2``
+``looker-sdk``                           ``>=22.4.0``
+``pandas-gbq``                           ``>=0.7.0``
+``pandas``                               ``>=2.1.2,<2.2; python_version >= "3.9"``
+``pandas``                               ``>=1.5.3,<2.2; python_version < "3.9"``
+``proto-plus``                           ``>=1.19.6``
+``python-slugify``                       ``>=7.0.0``
+``PyOpenSSL``                            ``>=23.0.0``
+``sqlalchemy-bigquery``                  ``>=1.2.1``
+``sqlalchemy-spanner``                   ``>=1.6.2``
+``tenacity``                             ``>=8.1.0``
+=======================================  =========================================
+
+Cross provider package dependencies
+-----------------------------------
+
+Those are dependencies that might be needed in order to use all the features of the package.
+You need to install the specified provider packages in order to use them.
+
+You can install such cross-provider dependencies when installing from PyPI. For example:
+
+.. code-block:: bash
+
+    pip install apache-airflow-providers-google[amazon]
+
+
+========================================================================================================================  ====================
+Dependent package                                                                                                         Extra
+========================================================================================================================  ====================
+`apache-airflow-providers-amazon <https://airflow.apache.org/docs/apache-airflow-providers-amazon>`_                      ``amazon``
+`apache-airflow-providers-apache-beam <https://airflow.apache.org/docs/apache-airflow-providers-apache-beam>`_            ``apache.beam``
+`apache-airflow-providers-apache-cassandra <https://airflow.apache.org/docs/apache-airflow-providers-apache-cassandra>`_  ``apache.cassandra``
+`apache-airflow-providers-cncf-kubernetes <https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes>`_    ``cncf.kubernetes``
+`apache-airflow-providers-common-sql <https://airflow.apache.org/docs/apache-airflow-providers-common-sql>`_              ``common.sql``
+`apache-airflow-providers-facebook <https://airflow.apache.org/docs/apache-airflow-providers-facebook>`_                  ``facebook``
+`apache-airflow-providers-microsoft-azure <https://airflow.apache.org/docs/apache-airflow-providers-microsoft-azure>`_    ``microsoft.azure``
+`apache-airflow-providers-microsoft-mssql <https://airflow.apache.org/docs/apache-airflow-providers-microsoft-mssql>`_    ``microsoft.mssql``
+`apache-airflow-providers-mysql <https://airflow.apache.org/docs/apache-airflow-providers-mysql>`_                        ``mysql``
+`apache-airflow-providers-openlineage <https://airflow.apache.org/docs/apache-airflow-providers-openlineage>`_            ``openlineage``
+`apache-airflow-providers-oracle <https://airflow.apache.org/docs/apache-airflow-providers-oracle>`_                      ``oracle``
+`apache-airflow-providers-postgres <https://airflow.apache.org/docs/apache-airflow-providers-postgres>`_                  ``postgres``
+`apache-airflow-providers-presto <https://airflow.apache.org/docs/apache-airflow-providers-presto>`_                      ``presto``
+`apache-airflow-providers-salesforce <https://airflow.apache.org/docs/apache-airflow-providers-salesforce>`_              ``salesforce``
+`apache-airflow-providers-sftp <https://airflow.apache.org/docs/apache-airflow-providers-sftp>`_                          ``sftp``
+`apache-airflow-providers-ssh <https://airflow.apache.org/docs/apache-airflow-providers-ssh>`_                            ``ssh``
+`apache-airflow-providers-trino <https://airflow.apache.org/docs/apache-airflow-providers-trino>`_                        ``trino``
+========================================================================================================================  ====================
+
+The changelog for the provider package can be found in the
+`changelog <https://airflow.apache.org/docs/apache-airflow-providers-google/10.21.0/changelog.html>`_.

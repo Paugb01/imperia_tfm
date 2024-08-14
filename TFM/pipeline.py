@@ -10,7 +10,7 @@ load_dotenv()
 bucket = os.getenv("BUCKET")
 region = os.getenv("REGION")
 project = os.getenv("PROJECT_ID")
-credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") # Existe flag para service account en airlfow
 
 # Set Google Application Credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
@@ -47,7 +47,6 @@ def run():
         'runner': 'DataflowRunner',
         'temp_location': f'{bucket}/tmp',
         'staging_location':  f'{bucket}/staging',
-        'requirements_file': 'requirements.txt',
         'save_main_session': True  # Esta es la opción clave
     }
 
@@ -61,7 +60,7 @@ def run():
          | 'ReadFromGCS' >> beam.io.ReadFromText( f'{bucket}/historico_ventas.csv')
          | 'ParseCSV' >> beam.ParDo(ParseCSV())
          | 'WriteToBigQuery' >> beam.io.WriteToBigQuery(
-                table=f'{project}.tfm_dataset.historico_ventas',
+                table=f'{project}.tfm_dataset.historico_ventas', # tabla/proyecto pasar desde airflow
                 schema='Id_Producto:STRING, Cliente:STRING, Punto_de_Venta:STRING, Fecha:DATE, Ventas:FLOAT',
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
                 create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED

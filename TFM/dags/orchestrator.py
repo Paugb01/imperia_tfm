@@ -1,34 +1,43 @@
-# The DAG object; we'll need this to instantiate a DAG
-from airflow.models.dag import DAG
+from airflow import DAG
+from airflow.providers.google.cloud.operators.dataflow import DataflowCreatePythonJobOperator
+from airflow.utils.dates import days_ago
+import os
+from dotenv import load_dotenv
 
-# Operators; we need this to operate!
-from airflow.operators.bash import BashOperator
-import textwrap
-from datetime import datetime, timedelta
-
+# Set env variables
+load_dotenv()
+bucket = os.getenv("BUCKET")
+region = os.getenv("REGION")
+project = os.getenv("PROJECT_ID")
+credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") # Existe flag para service account en airlfow
 abs_path_pipeline = '/Users/paugarciabardisa/projects/imperia_tfm/TFM/pipeline.py'
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': days_ago(1),
+    'retries': 1,
+}
 
 with DAG(
     'run_beam_pipeline',
-    default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
-    'retries': 1,
-    },
-    description="A simple tutorial DAG",
-    schedule=timedelta(days=1),
-    start_date=datetime(2021, 1, 1),
+    default_args=default_args,
+    schedule_interval=timedelta(days=1),
     catchup=False,
-    tags=["tfm"],
+    tags=['tfm'],
 ) as dag:
 
-
-    # Task to run the Apache Beam pipeline
-    t1 = BashOperator(
-        task_id='run_beam_pipeline',
-        bash_command=f'python {abs_path_pipeline}',
-        dag=dag,
+    run_beam = DataflowCreatePythonJobOperator(
+        task_id="run_beam_pipeline",
+        py_file=f'{abs_path_pipeline}',
+        job_name="run_beam_pipeline",
+        options={
+            'project': f'{project}',
+            'region': f'{region}',
+            'temp_location': f'gs://{bucket}/tmp',
+            'staging_location': f'gs://{bucket}/staging',
+            'save_main_session': True,
+            'serviceAccountEmail': 'beam-719@pakotinaikos.iam.gserviceaccount.com'
+        },
+        py_interpreter="python3",
     )
-
-

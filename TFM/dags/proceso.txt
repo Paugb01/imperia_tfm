@@ -1,0 +1,10 @@
+# Creating image to be run by airflow task
+docker build -t my-dataflow-pipeline .
+docker run -it --rm my-dataflow-pipeline
+
+# Pushing it to container registry
+docker tag my-dataflow-pipeline gcr.io/pakotinaikos/my-dataflow-pipeline
+docker push gcr.io/pakotinaikos/my-dataflow-pipeline
+
+# We need to upload the dag to the dags bucket for airflow to use it afterwards
+gs://bucket_1_tfm/flex_templates/template_spec.json

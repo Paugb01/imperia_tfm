@@ -1,17 +1,21 @@
 from airflow import DAG
 from airflow.providers.google.cloud.operators.dataflow import DataflowStartFlexTemplateOperator
+from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 import os
-from dotenv import load_dotenv
+from airflow.models import Variable
 
-# Load environment variables
-load_dotenv()
-bucket = os.getenv("BUCKET")
-region = os.getenv("REGION")
-project = os.getenv("PROJECT_ID")
-service_account = os.getenv("SERVICE_ACCOUNT_EMAIL", "default-service-account@your-project.iam.gserviceaccount.com")
+# Fetch Airflow Variables
+bucket = Variable.get('bucket')
+region = Variable.get('region')
+project = Variable.get('project')
+service_account = Variable.get('service_account')
 
+# Define file path
+csv_file_path = '../DatosPrueba/historico_ventas.csv'
+
+# Default arguments for the DAG
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -20,6 +24,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
+# Define the DAG
 with DAG(
     'run_flex_template_pipeline',
     default_args=default_args,
@@ -28,6 +33,14 @@ with DAG(
     tags=['tfm'],
 ) as dag:
 
+    # Task to upload the CSV to GCS
+    upload_file = LocalFilesystemToGCSOperator(
+        task_id="upload_file",
+        src=csv_file_path,
+        dst='historico_ventas.csv',
+        bucket=bucket,
+    )
+    # Task to start the Dataflow Flex Template job
     run_flex_template = DataflowStartFlexTemplateOperator(
         task_id="run_flex_template_pipeline",
         body={
@@ -47,3 +60,6 @@ with DAG(
         location=region,
         project_id=project
     )
+
+    # Define task dependencies
+    upload_file >> run_flex_template

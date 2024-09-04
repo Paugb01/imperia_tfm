@@ -1,5 +1,5 @@
 {
-    "image": "gcr.io/pakotinaikos/beam-flex-template:latest",
+    "image": "gcr.io/pakotinaikos/my-dataflow-pipeline:latest",
     "metadata": {
       "name": "my-flex-template",
       "description": "A flexible template for my Beam pipeline"

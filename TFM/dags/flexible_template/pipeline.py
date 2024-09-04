@@ -45,7 +45,7 @@ def run_pipeline(project, region, bucket):
     # Define the pipeline
     with beam.Pipeline(options=options) as p:
         (p
-         | 'ReadFromGCS' >> beam.io.ReadFromText(f'gs://{bucket}/historico_ventas.csv')
+         | 'ReadFromGCS' >> beam.io.ReadFromText(f'gs://{bucket}/assets/historico_ventas.csv')
          | 'ParseCSV' >> beam.ParDo(ParseCSV())
          | 'WriteToBigQuery' >> beam.io.WriteToBigQuery(
                 table=f'{project}.tfm_dataset.historico_ventas',

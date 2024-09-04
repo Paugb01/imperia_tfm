@@ -1,6 +1,5 @@
 # Creating image to be run by airflow task
 docker build -t my-dataflow-pipeline .
-docker run -it --rm my-dataflow-pipeline
 
 # Pushing it to container registry
 docker tag my-dataflow-pipeline gcr.io/pakotinaikos/my-dataflow-pipeline

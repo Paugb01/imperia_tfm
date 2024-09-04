@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.google.cloud.operators.gcs import GCSSynchronizeBucketsOperator
+from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.operators.dataflow import DataflowStartFlexTemplateOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
@@ -14,9 +14,8 @@ service_account = Variable.get('service_account')
 
 # Define folder paths in GCS
 source_folder_path = 'assets/'  # Folder in source bucket
-destination_folder_path = 'assets/'  # Folder in destination bucket
 source_file_path = f'{source_folder_path}historico_ventas.csv'
-destination_file_path = f'gs://{bucket}/{destination_folder_path}historico_ventas.csv'
+destination_file_path = f'gs://{bucket}/{source_folder_path}historico_ventas.csv'
 
 # Default arguments for the DAG
 default_args = {
@@ -36,16 +35,12 @@ with DAG(
     tags=['tfm'],
 ) as dag:
 
-    # Task to synchronize (copy) the contents of the source folder to the destination folder
-    synchronize_folders = GCSSynchronizeBucketsOperator(
-        task_id='synchronize_folders',
-        source_bucket=bucket_source,
-        destination_bucket=bucket,
-        source_object=source_folder_path,  # Root sync directory in source bucket
-        destination_object=destination_folder_path,  # Root sync directory in destination bucket
-        recursive=True,  # To include subdirectories
-        allow_overwrite=True,  # Allow overwriting files in the destination bucket
-        delete_extra_files=False  # Optional: Set to True if you want to delete files in the destination bucket not present in the source bucket
+    # Task to check for the existence of the file in the source bucket
+    check_file_existence = GCSObjectExistenceSensor(
+        task_id='check_file_existence',
+        bucket=bucket_source,
+        object=source_file_path,
+        google_cloud_conn_id='google_cloud_default'  # Default connection ID 
     )
     
     # Task to start the Dataflow Flex Template job
@@ -54,14 +49,14 @@ with DAG(
         body={
             'launchParameter': {
                 'jobName': 'flex-template-job',
-                'containerSpecGcsPath': f'gs://{bucket}/flex_templates/template_spec.json',
+                'containerSpecGcsPath': f'{bucket}/flex_templates/template_spec.json',
                 'parameters': {
                     'inputFile': destination_file_path,  # Path to the file in the destination folder
                     'outputTable': f'{project}:tfm_dataset.historico_ventas',
                 },
                 'environment': {
                     'serviceAccountEmail': service_account,
-                    'tempLocation': f'gs://{bucket}/tmp'
+                    'tempLocation': f'{bucket}/tmp'
                 }
             }
         },
@@ -70,4 +65,4 @@ with DAG(
     )
 
     # Define task dependencies
-    synchronize_folders >> run_flex_template
+    check_file_existence >> run_flex_template

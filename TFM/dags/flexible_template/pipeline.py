@@ -33,8 +33,8 @@ def run_pipeline(project, region, bucket):
         'project': project,
         'region': region,
         'runner': 'DataflowRunner',
-        'temp_location': f'gs://{bucket}/tmp',
-        'staging_location':  f'gs://{bucket}/staging',
+        'temp_location': f'{bucket}/tmp',
+        'staging_location':  f'{bucket}/staging',
         'save_main_session': True  # This option is key
     }
 
@@ -45,7 +45,7 @@ def run_pipeline(project, region, bucket):
     # Define the pipeline
     with beam.Pipeline(options=options) as p:
         (p
-         | 'ReadFromGCS' >> beam.io.ReadFromText(f'gs://{bucket}/assets/historico_ventas.csv')
+         | 'ReadFromGCS' >> beam.io.ReadFromText(f'{bucket}/assets/historico_ventas.csv')
          | 'ParseCSV' >> beam.ParDo(ParseCSV())
          | 'WriteToBigQuery' >> beam.io.WriteToBigQuery(
                 table=f'{project}.tfm_dataset.historico_ventas',

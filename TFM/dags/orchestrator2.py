@@ -1,6 +1,6 @@
 from airflow import DAG
 from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
-from airflow.providers.google.cloud.operators.dataflow import DataflowStartFlexTemplateOperator
+from airflow.providers.google.cloud.operators.dataflow import DataflowTemplatedJobStartOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.models import Variable
@@ -47,8 +47,13 @@ with DAG(
     start_template_job = DataflowTemplatedJobStartOperator(
         task_id="start_template_job",
         project_id=project,
-        template="gs://dataflow-templates/latest/Word_Count",
-        parameters={"inputFile": f"{destination_file_path}", "output": GCS_OUTPUT},
+        template="gs://dataflow-templates-europe-southwest1/latest/GCS_CSV_to_BigQuery",
+        parameters={"inputFilePattern": f"{destination_file_path}", 
+                    "schemaJSONPath": f"{bucket}/{source_folder_path}/",
+                    "outputTable": "pakotinaikos.tfm_dataset.historico_ventas",
+                    "bigQueryLoadingTemporaryDirectory": f"{bucket}/tmp",
+                    "badRecordsOutputTable": "pakotinaikos.tfm_dataset.BadRecords",
+                    "delimiter": ","},
         location=region,
         wait_until_finished=True,
     )

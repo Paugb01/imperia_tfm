@@ -1,0 +1,29 @@
+{
+    "BigQuery Schema": [
+      {
+        "mode": "NULLABLE",
+        "name": "Id_Producto",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "Cliente",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "Punto_de_Venta",
+        "type": "STRING"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "Fecha",
+        "type": "DATE"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "Ventas",
+        "type": "FLOAT"
+      }
+    ]
+  }

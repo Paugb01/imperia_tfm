@@ -44,25 +44,16 @@ with DAG(
     )
     
     # Task to start the Dataflow Flex Template job
-    run_flex_template = DataflowStartFlexTemplateOperator(
-        task_id='run_flex_template_pipeline',
-        body={
-            'launchParameter': {
-                'jobName': 'flex-template-job',
-                'containerSpecGcsPath': f'{bucket}/flex_templates/template_spec.json',
-                'parameters': {
-                    'inputFile': destination_file_path,  # Path to the file in the destination folder
-                    'outputTable': f'{project}:tfm_dataset.historico_ventas',
-                },
-                'environment': {
-                    'serviceAccountEmail': service_account,
-                    'tempLocation': f'{bucket}/tmp'
-                }
-            }
-        },
+    start_template_job = DataflowTemplatedJobStartOperator(
+        task_id="start_template_job",
+        project_id=project,
+        template="gs://dataflow-templates/latest/Word_Count",
+        parameters={"inputFile": f"{destination_file_path}", "output": GCS_OUTPUT},
         location=region,
-        project_id=project
+        wait_until_finished=True,
     )
 
+
     # Define task dependencies
-    check_file_existence >> run_flex_template
+check_file_existence >> start_template_job
+

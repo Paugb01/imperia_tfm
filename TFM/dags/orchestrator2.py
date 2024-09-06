@@ -15,7 +15,7 @@ service_account = Variable.get('service_account')
 # Define folder paths in GCS
 source_folder_path = 'assets/'  # Folder in source bucket
 source_file_path = f'{source_folder_path}historico_ventas.csv'
-destination_file_path = f'gs://{bucket}/{source_folder_path}historico_ventas.csv'
+destination_file_path = f'{bucket}/{source_folder_path}historico_ventas.csv'
 
 # Default arguments for the DAG
 default_args = {
@@ -49,11 +49,12 @@ with DAG(
         project_id=project,
         template="gs://dataflow-templates-europe-southwest1/latest/GCS_CSV_to_BigQuery",
         parameters={"inputFilePattern": f"{destination_file_path}", 
-                    "schemaJSONPath": f"{bucket}/{source_folder_path}/",
-                    "outputTable": "pakotinaikos.tfm_dataset.historico_ventas",
+                    "schemaJSONPath": f"{bucket}/{source_folder_path}schema.json",
+                    "outputTable": "pakotinaikos.tfm_dataset.historico_ventas_testing",
                     "bigQueryLoadingTemporaryDirectory": f"{bucket}/tmp",
                     "badRecordsOutputTable": "pakotinaikos.tfm_dataset.BadRecords",
-                    "delimiter": ","},
+                    "delimiter": ",",
+                    "csvFormat": "Default"},
         location=region,
         wait_until_finished=True,
     )

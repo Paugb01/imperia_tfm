@@ -1,78 +1,87 @@
-import joblib
-import streamlit as st
-import numpy as np
+import pickle
 import pandas as pd
+import random
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from datetime import datetime, timedelta
 
-# Cargar el modelo y el preprocesador
-modelo_path = 'xgb_model.pkl'
-scaler_path = 'scaler.pkl'
+# Crear la aplicación FastAPI
+app = FastAPI()
 
-modelo = joblib.load(modelo_path)
-scaler = joblib.load(scaler_path)
+# Definir el modelo de datos para la entrada de la API
+class InputData(BaseModel):
+    Id_Producto: str
+    Cliente: str
+    Punto_de_Venta: int
+    Mes: int
+    Año: int
 
-# Configuración de la aplicación
-st.set_page_config(
-    page_title="Predicción de Ventas",
-    page_icon="🛒",
-    layout="centered",
-    initial_sidebar_state="expanded",
-)
+@app.post("/predict")
+def predict_sales(data: InputData):
+    try:
+        # Generar características aleatorias para Id_Producto
+        producto_data = {
+            "Id_Producto": data.Id_Producto,
+            "Familia": random.choice(["Electrónica", "Alimentos", "Ropa", "Muebles"]),
+            "Subfamilia": random.choice(["Televisores", "Bebidas", "Camisas", "Sillas"]),
+            "Formato": random.choice(["Grande", "Mediano", "Pequeño"]),
+            "Precio": round(random.uniform(10, 1000), 2),
+            "Margen": round(random.uniform(0.1, 0.5), 2),
+            "Cliente_Objetivo": random.choice(["Jóvenes", "Adultos", "Niños"]),
+            "Color": random.choice(["Rojo", "Azul", "Verde", "Negro"]),
+            "Material": random.choice(["Plástico", "Metal", "Algodón"]),
+            "Peso": round(random.uniform(0.5, 10.0), 2),
+            "Tamaño": random.choice(["Pequeño", "Mediano", "Grande"]),
+            "Marca": random.choice(["Marca A", "Marca B", "Marca C"]),
+            "País_Origen": random.choice(["España", "China", "EE.UU", "Alemania"]),
+            "Ventas_Base": random.randint(100, 10000)
+        }
 
-# Título de la aplicación
-st.title("Predicción de Ventas de Productos")
-st.markdown("""
-Esta aplicación predice las ventas de un producto dado un mes y un año específicos.
-""")
+        # Generar características aleatorias para Cliente
+        cliente_data = {
+            "Cliente": data.Cliente,
+            "Facturación_Total": round(random.uniform(10000, 1000000), 2),
+            "Canal_de_Ventas": random.choice(["Online", "Físico"]),
+            "Numero_Puntos_de_Venta": random.randint(1, 50),
+            "Región": random.choice(["Norte", "Sur", "Este", "Oeste"]),
+            "Segmento": random.choice(["Premium", "Económico", "Estándar"]),
+            "Antigüedad": random.randint(1, 50)
+        }
 
-# Inputs para el usuario
-st.sidebar.header("Parámetros de entrada")
-mes = st.sidebar.selectbox("Mes", list(range(1, 13)), index=0)
-ano = st.sidebar.selectbox("Año", list(range(2020, 2031)), index=4)
+        # Generar características aleatorias para Punto de venta
+        punto_de_venta_data = {
+            "Cliente": data.Cliente,
+            "Punto_de_Venta": data.Punto_de_Venta,
+            "Población_500m": random.randint(1000, 50000),
+            "Población_2km": random.randint(5000, 200000),
+            "Puntos_de_Venta_Cercanos": random.randint(1, 20),
+            "Aparcamiento": random.choice(["Sí", "No"]),
+            "Accesibilidad": random.choice(["Buena", "Regular", "Mala"]),
+            "Horas_Operación": random.choice(["24h", "12h", "8h"]),
+            "Tipo_Zona": random.choice(["Urbana", "Suburbana", "Rural"])
+        }
 
-# Función para realizar predicciones
-def predecir_ventas(mes, ano):
-    datos = [[mes, ano]]
-    datos_transformados = scaler.transform(datos)
-    prediccion = modelo.predict(datos_transformados)
-    return prediccion[0]
+        # Simular predicción de ventas
+        predicted_sales = round(random.uniform(1000, 100000), 2)
 
-# Botón para hacer la predicción
-if st.sidebar.button("Predecir"):
-    # Calcular las predicciones para los 3 meses anteriores y 3 posteriores
-    resultados = []
-    fechas = []
-    
-    for i in range(-3, 4):
-        mes_pred = mes + i
-        ano_pred = ano
-        
-        # Ajuste del mes y año en caso de que el mes sea menor que 1 o mayor que 12
-        if mes_pred < 1:
-            mes_pred += 12
-            ano_pred -= 1
-        elif mes_pred > 12:
-            mes_pred -= 12
-            ano_pred += 1
-        
-        prediccion = predecir_ventas(mes_pred, ano_pred)
-        resultados.append(prediccion)
-        fechas.append(f"{ano_pred}-{mes_pred:02d}")
-    
-    # Crear un DataFrame para el gráfico
-    df_predicciones = pd.DataFrame({
-        "Fecha": fechas,
-        "Predicción": resultados
-    })
+        # Generar la evolución de ventas de los últimos 6 meses
+        fecha_actual = datetime(data.Año, data.Mes, 1)
+        meses_anteriores = [(fecha_actual - timedelta(days=30 * i)).strftime("%Y-%m") for i in range(1, 7)][::-1]
+        ventas_anteriores = [round(random.uniform(500, 10000), 2) for _ in range(6)]
 
-    # Mostrar los resultados
-    st.subheader("Resultados de la predicción")
-    st.write(f"**Predicción para Mes:** {mes} **Año:** {ano}")
-    st.write(f"**Predicción de ventas:** {resultados[3]:.2f} unidades")
+        # Combinar todos los datos en un solo diccionario
+        resultado = {
+            "Producto": producto_data,
+            "Cliente": cliente_data,
+            "Punto_de_Venta": punto_de_venta_data,
+            "Predicción_Ventas": predicted_sales,
+            "Histórico_Ventas": {
+                "Meses": meses_anteriores,
+                "Ventas": ventas_anteriores
+            }
+        }
 
-    # Mostrar el gráfico de la tendencia
-    st.subheader("Tendencia de Predicción")
-    st.line_chart(df_predicciones.set_index('Fecha')['Predicción'])
+        return resultado
 
-# Footer
-st.markdown("---")
-st.write("Desarrollado por Pakotinaikos. Powered by Streamlit.")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error in prediction: {e}")

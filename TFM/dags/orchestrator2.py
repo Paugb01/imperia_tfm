@@ -54,7 +54,8 @@ with DAG(
                     "bigQueryLoadingTemporaryDirectory": f"{bucket}/tmp",
                     "badRecordsOutputTable": "pakotinaikos.tfm_dataset.BadRecords",
                     "delimiter": ",",
-                    "csvFormat": "Default"},
+                    "csvFormat": "Default",
+                    "containsHeaders": "true"},
         location=region,
         wait_until_finished=True,
     )

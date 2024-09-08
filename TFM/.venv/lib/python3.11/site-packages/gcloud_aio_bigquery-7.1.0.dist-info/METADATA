@@ -1,0 +1,60 @@
+Metadata-Version: 2.1
+Name: gcloud-aio-bigquery
+Version: 7.1.0
+Summary: Python Client for Google Cloud BigQuery
+Home-page: https://github.com/talkiq/gcloud-aio
+License: MIT
+Author: Vi Engineering
+Author-email: voiceai-eng@dialpad.com
+Requires-Python: >=3.8,<4.0
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet
+Requires-Dist: gcloud-aio-auth (>=3.1.0,<6.0.0)
+Project-URL: Repository, https://github.com/talkiq/gcloud-aio
+Description-Content-Type: text/x-rst
+
+(Asyncio OR Threadsafe) Python Client for Google Cloud BigQuery
+===============================================================
+
+    This is a shared codebase for ``gcloud-aio-bigquery`` and
+    ``gcloud-rest-bigquery``
+
+|pypi| |pythons|
+
+Installation
+------------
+
+.. code-block:: console
+
+    $ pip install --upgrade gcloud-{aio,rest}-bigquery
+
+Usage
+-----
+
+See `our docs`_.
+
+Contributing
+------------
+
+Please see our `contributing guide`_.
+
+.. _contributing guide: https://github.com/talkiq/gcloud-rest/blob/master/.github/CONTRIBUTING.rst
+.. _our docs: https://talkiq.github.io/gcloud-aio
+
+.. |pypi| image:: https://img.shields.io/pypi/v/gcloud-aio-bigquery.svg?style=flat-square
+    :alt: Latest PyPI Version (gcloud-aio-bigquery)
+    :target: https://pypi.org/project/gcloud-aio-bigquery/
+
+.. |pythons| image:: https://img.shields.io/pypi/pyversions/gcloud-aio-bigquery.svg?style=flat-square&label=python
+    :alt: Python Version Support
+    :target: https://pypi.org/project/gcloud-aio-bigquery/
+

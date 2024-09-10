@@ -1,0 +1,7 @@
+{
+    "bucket": "gs://bucket_1_tfm",
+    "region": "europe-southwest1",
+    "project": "pakotinaikos",
+    "service_account": "beam-719@pakotinaikos.iam.gserviceaccount.com",
+    "bucket_source": "europe-southwest1-mi-entorn-3a0f10b5-bucket"
+}

@@ -1,0 +1,24 @@
+{
+    "BigQuery Schema": [
+      {
+        "name": "Id_Producto",
+        "type": "STRING"
+      },
+      {
+        "name": "Cliente",
+        "type": "STRING"
+      },
+      {
+        "name": "Punto_de_Venta",
+        "type": "STRING"
+      },
+      {
+        "name": "Fecha",
+        "type": "DATE"
+      },
+      {
+        "name": "Ventas",
+        "type": "FLOAT"
+      }
+    ]
+  }

@@ -12,10 +12,12 @@ PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Imperia",
+    page_title="Imperia : Predicción de Ventas",
     layout="centered"  # También puedes usar "centered"
 )
 
+# Ubica image.png arriba de la página y cambia el color a azul oscuro
+st.image("./image.png", use_column_width=True, output_format="PNG", channels="BGR")
 # Título de la aplicación
 st.title("Sistema de Predicción de Ventas")
 
@@ -136,15 +138,22 @@ else:
                 with col2:
                     st.subheader("Datos del Punto de Venta")
                     st.write(pd.DataFrame(list(punto_de_venta_info.items()), columns=["Campo", "Valor"]).set_index("Campo"))
+                
+                st.markdown("<hr style='border: 1px solid black;'>", unsafe_allow_html=True)
 
                 st.header("Predicción de Ventas")
 
                 # Mostrar la predicción de ventas con fecha seleccionada
                 st.success(f"🎯 Predicción ventas {str(mes).zfill(2)}/{año}: {result['Predicción_Ventas']:.2f} uds.")
+                # Mostrar la facturación de la prediccion (Precio x Ventas)
+                st.success(f"💰 Facturación {str(mes).zfill(2)}/{año}: {result['Predicción_Ventas'] * producto['Precio']:.2f} €")
 
                 # Mostrar evolución de ventas
                 historico_meses = historico_ventas["Meses"]
                 ventas_historicas = historico_ventas["Ventas"]
+
+                # Renombrar los meses para que tengan el formato deseado
+                historico_meses = [mes.replace("Historico ", "").replace("-", "/") for mes in historico_meses]
 
                 # Crear un DataFrame para la serie temporal
                 df = pd.DataFrame({
@@ -153,7 +162,7 @@ else:
                 })
 
                 # Agregar la predicción al final del historial
-                df = df.append({"Mes": f"{año}-{str(mes).zfill(2)}", "Ventas": result["Predicción_Ventas"]}, ignore_index=True)
+                df = pd.concat([df, pd.DataFrame({"Mes": [f"{año}/{str(mes).zfill(2)}"], "Ventas": [result["Predicción_Ventas"]]})], ignore_index=True)
 
                 # Graficar la evolución de las ventas
                 plt.figure(figsize=(10, 5))
@@ -170,7 +179,8 @@ else:
 
                 st.pyplot(plt)
 
-                st.subheader("Este producto en la industria")
+                st.markdown("<hr style='border: 1px solid #FF6347;'>", unsafe_allow_html=True)
+                st.markdown("<h3>El producto en la industria</h3>", unsafe_allow_html=True)
 
                 # Query a BigQuery para obtener los datos necesarios
                 query = """
@@ -221,21 +231,20 @@ else:
                 # Query a BigQuery para obtener la tendencia del histórico de ventas por ID_Producto
                 query_tendencia = """
                 SELECT Id_Producto, 
-                    SUM(`Historico 2023-01`) AS `Historico_2023_01`, 
-                    SUM(`Historico 2023-02`) AS `Historico_2023_02`, 
-                    SUM(`Historico 2023-03`) AS `Historico_2023_03`, 
-                    SUM(`Historico 2023-04`) AS `Historico_2023_04`, 
-                    SUM(`Historico 2023-05`) AS `Historico_2023_05`, 
-                    SUM(`Historico 2023-06`) AS `Historico_2023_06`, 
-                    SUM(`Historico 2023-07`) AS `Historico_2023_07`, 
-                    SUM(`Historico 2023-08`) AS `Historico_2023_08`, 
-                    SUM(`Historico 2023-09`) AS `Historico_2023_09`, 
-                    SUM(`Historico 2023-10`) AS `Historico_2023_10`, 
-                    SUM(`Historico 2023-11`) AS `Historico_2023_11`, 
-                    SUM(`Historico 2023-12`) AS `Historico_2023_12`, 
-                    SUM(`Historico 2024-1`) AS `Historico_2024_1`, 
-                    SUM(`Historico 2024-2`) AS `Historico_2024_2`, 
-                    SUM(`Historico 2024-3`) AS `Historico_2024_3`
+                    SUM(`Historico 2023-01`) AS `Historico 2023-01`, 
+                    SUM(`Historico 2023-02`) AS `Historico 2023-02`, 
+                    SUM(`Historico 2023-03`) AS `Historico 2023-03`, 
+                    SUM(`Historico 2023-04`) AS `Historico 2023-04`, 
+                    SUM(`Historico 2023-05`) AS `Historico 2023-05`, 
+                    SUM(`Historico 2023-06`) AS `Historico 2023-06`, 
+                    SUM(`Historico 2023-07`) AS `Historico 2023-07`, 
+                    SUM(`Historico 2023-08`) AS `Historico 2023-08`, 
+                    SUM(`Historico 2023-09`) AS `Historico 2023-09`, 
+                    SUM(`Historico 2023-10`) AS `Historico 2023-10`, 
+                    SUM(`Historico 2023-11`) AS `Historico 2023-11`, 
+                    SUM(`Historico 2023-12`) AS `Historico 2023-12`, 
+                    SUM(`Historico 2024-1`) AS `Historico 2024-1`, 
+                    SUM(`Historico 2024-2`) AS `Historico 2024-2`
                 FROM `pakotinaikos.tfm_dataset.set_testeo`
                 WHERE Id_Producto = '{}'
                 GROUP BY Id_Producto

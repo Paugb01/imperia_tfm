@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
+import pandas_gbq
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 # URL de la API
@@ -8,6 +10,11 @@ API_URL = "http://localhost:8000/predict"
 
 PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.jpg"
 
+st.set_page_config(
+    page_title="Mi Aplicación",
+    page_icon=":rocket:",
+    layout="centered"  # También puedes usar "centered"
+)
 # Título de la aplicación
 st.title("Sistema de Predicción de Ventas")
 
@@ -162,6 +169,53 @@ else:
 
                 st.pyplot(plt)
 
+                # Query a BigQuery para obtener los datos necesarios
+                query = """
+                SELECT Canal_de_Ventas, SUM(Ventas_Base) AS Ventas_Base_Total
+                FROM `pakotinaikos.tfm_dataset.set_testeo`
+                WHERE Id_Producto = '{}'
+                GROUP BY Canal_de_Ventas
+                """.format(id_producto)
+
+                # Ejecutar la query y obtener los resultados
+                df_ventas = pandas_gbq.read_gbq(query, project_id="pakotinaikos")
+
+                # Crear el gráfico circular
+                fig, ax = plt.subplots(figsize=(6, 3))
+                ax.pie(df_ventas["Ventas_Base_Total"], labels=df_ventas["Canal_de_Ventas"], autopct='%1.1f%%')
+                ax.set_title("Nº Ventas por Canal de Ventas")
+                ax.axis('equal')
+
+                # Configurar las columnas
+                col1, col2 = st.columns([1, 1])  # Puedes ajustar las proporciones
+
+                # Mostrar el gráfico en la primera columna
+                with col1:
+                    st.pyplot(fig)
+
+                # Query a BigQuery para obtener la media de 'Precio' por Id_Producto
+                query_precio = """
+                SELECT Id_Producto, AVG(Precio) AS Precio_Medio
+                FROM `pakotinaikos.tfm_dataset.set_testeo`
+                WHERE Id_Producto = '{}'
+                GROUP BY Id_Producto
+                """.format(id_producto)
+
+                # Ejecutar la query y obtener los resultados
+                df_precio = pandas_gbq.read_gbq(query_precio, project_id="pakotinaikos")
+
+                # Obtener el precio medio
+                precio_medio = df_precio["Precio_Medio"].values[0]
+
+                # Mostrar el precio medio en grande y formateado
+                with col2:
+                    st.markdown(f"""
+                    <div style="text-align: center;">
+                        <h1 style="color: #FF6347;">{precio_medio:.2f} €</h1>
+                        <p style="font-size: 1em; color: #000;">Precio medio Producto {id_producto}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
             else:
                 st.error("Error en la API: " + response.text)
         else:

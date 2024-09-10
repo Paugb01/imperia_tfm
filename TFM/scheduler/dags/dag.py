@@ -1,7 +1,8 @@
 from airflow import DAG
 from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.operators.dataflow import DataflowTemplatedJobStartOperator
-from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryExecuteQueryOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.models import Variable
@@ -26,6 +27,16 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
+
+# Then define a Python task to handle what happens if there is no data
+def handle_data_absence(**context):
+    row_count = context['task_instance'].xcom_pull(task_ids='check_data_exists')[0][0]
+    if row_count == 0:
+        print("No data loaded for today. Send alert or take further action.")
+        # Optionally raise an alert or handle it differently
+    else:
+        print(f"Data is present for today: {row_count} rows.")
+
 
 # Define the DAG
 with DAG(
@@ -61,19 +72,27 @@ with DAG(
         wait_until_finished=True,
     )
 
-    # Task to check if today's partition count is greater than yesterday's
-    check_partition_counts = BigQueryCheckOperator(
-        task_id="check_partition_counts",
+
+    check_data_exists = BigQueryExecuteQueryOperator(
+        task_id='check_data_exists',
         sql="""
-        SELECT 
-          COUNTIF(event_date = CURRENT_DATE()) > COUNTIF(event_date = CURRENT_DATE() - INTERVAL 1 DAY) 
-        AS is_count_greater
-        FROM `pakotinaikos.tfm_dataset.historico_ventas`
+            SELECT COUNT(1) as row_count
+            FROM `pakotinaikos.tfm_dataset.historico_ventas`
+            WHERE Fecha = CURRENT_DATE();
         """,
-        gcp_conn_id='google_cloud_default',  # BigQuery connection
-        use_legacy_sql=False,  # Use standard SQL
-        location=region  # Set the location of the BigQuery dataset
+        use_legacy_sql=False,
+        destination_dataset_table='pakotinaikos.tfm_dataset.temp_results',  # Temp table for result
+        write_disposition='WRITE_TRUNCATE',  # Overwrite temp table if it exists
+        location=region
     )
 
+    handle_data_absence = PythonOperator(
+        task_id='handle_data_absence',
+        python_callable=handle_data_absence,
+        provide_context=True
+    )
+
+
+
     # Define task dependencies
-    check_file_existence >> start_template_job >> check_partition_counts
+    check_file_existence >> start_template_job >> check_data_exists >> handle_data_absence

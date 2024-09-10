@@ -10,11 +10,12 @@ API_URL = "http://localhost:8000/predict"
 
 PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.jpg"
 
+# Configuración de la página
 st.set_page_config(
-    page_title="Mi Aplicación",
-    page_icon=":rocket:",
+    page_title="Imperia",
     layout="centered"  # También puedes usar "centered"
 )
+
 # Título de la aplicación
 st.title("Sistema de Predicción de Ventas")
 
@@ -169,6 +170,8 @@ else:
 
                 st.pyplot(plt)
 
+                st.subheader("Este producto en la industria")
+
                 # Query a BigQuery para obtener los datos necesarios
                 query = """
                 SELECT Canal_de_Ventas, SUM(Ventas_Base) AS Ventas_Base_Total
@@ -215,7 +218,61 @@ else:
                         <p style="font-size: 1em; color: #000;">Precio medio Producto {id_producto}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    
+                # Query a BigQuery para obtener la tendencia del histórico de ventas por ID_Producto
+                query_tendencia = """
+                SELECT Id_Producto, 
+                    SUM(`Historico 2023-01`) AS `Historico_2023_01`, 
+                    SUM(`Historico 2023-02`) AS `Historico_2023_02`, 
+                    SUM(`Historico 2023-03`) AS `Historico_2023_03`, 
+                    SUM(`Historico 2023-04`) AS `Historico_2023_04`, 
+                    SUM(`Historico 2023-05`) AS `Historico_2023_05`, 
+                    SUM(`Historico 2023-06`) AS `Historico_2023_06`, 
+                    SUM(`Historico 2023-07`) AS `Historico_2023_07`, 
+                    SUM(`Historico 2023-08`) AS `Historico_2023_08`, 
+                    SUM(`Historico 2023-09`) AS `Historico_2023_09`, 
+                    SUM(`Historico 2023-10`) AS `Historico_2023_10`, 
+                    SUM(`Historico 2023-11`) AS `Historico_2023_11`, 
+                    SUM(`Historico 2023-12`) AS `Historico_2023_12`, 
+                    SUM(`Historico 2024-1`) AS `Historico_2024_1`, 
+                    SUM(`Historico 2024-2`) AS `Historico_2024_2`, 
+                    SUM(`Historico 2024-3`) AS `Historico_2024_3`
+                FROM `pakotinaikos.tfm_dataset.set_testeo`
+                WHERE Id_Producto = '{}'
+                GROUP BY Id_Producto
+                """.format(id_producto)
+
+                # Ejecutar la query y obtener los resultados
+                df_tendencia = pandas_gbq.read_gbq(query_tendencia, project_id="pakotinaikos")
+
+                # Obtener los meses y las ventas
+                meses = list(df_tendencia.columns[1:])
+                ventas = df_tendencia.iloc[0, 1:].values
+
+                # Convertir los nombres de los meses a un formato más legible
+                meses_convertidos = [
+                    mes.replace("Historico ", "").replace("-", "/")
+                    for mes in meses
+                ]
+
+                # Crear un DataFrame para la tendencia
+                df_tendencia = pd.DataFrame({
+                    "Mes": meses_convertidos,
+                    "Ventas": ventas
+                })
+
+                # Graficar la tendencia de ventas
+                plt.figure(figsize=(10, 5))
+                plt.plot(df_tendencia["Mes"], df_tendencia["Ventas"], marker='o', color='green', label='Tendencia de Ventas')
+                plt.title("Tendencia de Ventas")
+                plt.xlabel("Mes/Año")
+                plt.ylabel("Ventas")
+                plt.xticks(rotation=45)
+                plt.grid(True)
+
+                st.pyplot(plt)
+
+
+
             else:
                 st.error("Error en la API: " + response.text)
         else:

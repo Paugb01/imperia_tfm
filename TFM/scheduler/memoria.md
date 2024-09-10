@@ -12,6 +12,10 @@ Algunos de los pasos en este proceso han consistido en utilizar distintos operad
 En último lugar, hemos llegado a una versión básica (ya que es la idea integrar más pasos del workflow en la gestión administrada por airflow) pero consistente y elegante. Hemos programado dos tareas:
 - La primera comprueba que el csv de entrada existe en un bucket de GCS haciendo uso del operador [GCSObjectExistenceSensor](https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/sensors/gcs/index.html).
 - La segunda utiliza el operador [DataflowTemplatedJobStartOperator](https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/dataflow/index.html) para lanzar un pipeline de Dataflow basado en una plantilla clásica. Para más documentación [click aquí](https://cloud.google.com/dataflow/docs/guides/templates/provided/cloud-storage-csv-to-bigquery).
+- Por último, utilizamos el operador [BigQueryCheckOperator](https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/bigquery/index.html#airflow.providers.google.cloud.operators.bigquery.BigQueryCheckOperator) para comprobar que la tabla Historico_ventas efectivamente contiene los nuevos datos. Esto lo hace a través de una query que comprueba que el número de filas es mayor al número de filas de la ejecución previa del DAG. Para comprobar esto utilizamos la siguiente query: `SELECT 
+          COUNTIF(Fecha = CURRENT_DATE()) > COUNTIF(Fecha = CURRENT_DATE() - INTERVAL 1 DAY) 
+        AS is_count_greater
+        FROM historico_ventas`.
 - La configuración del programador de airflow lanza el DAG una vez cada 24h.
 
 <img src="./assets/img.png" alt="Airflow schedule working">

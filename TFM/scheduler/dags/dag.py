@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.operators.dataflow import DataflowTemplatedJobStartOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.models import Variable
@@ -60,7 +61,19 @@ with DAG(
         wait_until_finished=True,
     )
 
+    # Task to check if today's partition count is greater than yesterday's
+    check_partition_counts = BigQueryCheckOperator(
+        task_id="check_partition_counts",
+        sql="""
+        SELECT 
+          COUNTIF(event_date = CURRENT_DATE()) > COUNTIF(event_date = CURRENT_DATE() - INTERVAL 1 DAY) 
+        AS is_count_greater
+        FROM `pakotinaikos.tfm_dataset.historico_ventas`
+        """,
+        gcp_conn_id='google_cloud_default',  # BigQuery connection
+        use_legacy_sql=False,  # Use standard SQL
+        location=region  # Set the location of the BigQuery dataset
+    )
 
     # Define task dependencies
-check_file_existence >> start_template_job
-
+    check_file_existence >> start_template_job >> check_partition_counts

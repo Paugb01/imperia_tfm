@@ -1,9 +1,8 @@
 from google.cloud import bigquery
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException 
 from pydantic import BaseModel
 import joblib
 import pandas as pd
-from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler
 
 app = FastAPI()
 
@@ -184,3 +183,7 @@ def predict_sales(data: InputData):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error in prediction: {e}")
+
+@app.get("/api")
+def read_root():
+    return {"message": "API is working."}

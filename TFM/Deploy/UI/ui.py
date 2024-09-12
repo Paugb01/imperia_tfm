@@ -2,11 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_gbq
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 # URL de la API
-API_URL = "http://localhost:8000/predict"
+API_URL = "http://34.79.144.132/predict"
 
 PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.jpg"
 
@@ -145,8 +144,6 @@ else:
 
                 # Mostrar la predicción de ventas con fecha seleccionada
                 st.success(f"🎯 Predicción ventas {str(mes).zfill(2)}/{año}: {result['Predicción_Ventas']:.2f} uds.")
-                # Mostrar la facturación de la prediccion (Precio x Ventas)
-                st.success(f"💰 Facturación {str(mes).zfill(2)}/{año}: {result['Predicción_Ventas'] * producto['Precio']:.2f} €")
 
                 # Mostrar evolución de ventas
                 historico_meses = historico_ventas["Meses"]

@@ -1,9 +1,8 @@
 from google.cloud import bigquery
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException 
 from pydantic import BaseModel
 import joblib
 import pandas as pd
-from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler
 
 app = FastAPI()
 
@@ -23,6 +22,7 @@ def get_data_from_bigquery(id_producto: str, cliente: str, punto_de_venta: int):
     project_id = "pakotinaikos"
     client = bigquery.Client(project=project_id)
 
+    # Consulta principal
     query = """
         SELECT * FROM `pakotinaikos.tfm_dataset.set_testeo`
         WHERE Id_Producto = @id_producto AND Cliente = @cliente AND Punto_de_Venta = @punto_de_venta
@@ -38,8 +38,90 @@ def get_data_from_bigquery(id_producto: str, cliente: str, punto_de_venta: int):
     
     query_job = client.query(query, job_config=job_config)
     results = query_job.result()
-    
-    return results.to_dataframe()
+    df_results = results.to_dataframe()
+    # Si no hay resultados, ejecutamos las queries adicionales
+    if df_results.empty:
+        try:
+            # Primera query para obtener características del producto
+            #print("Ejecutando query1")
+            query1 = """
+                SELECT *
+                FROM `pakotinaikos.tfm_dataset.caracteristicas_productos`
+                WHERE Id_Producto = @id_producto
+            """
+            
+            job_config1 = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("id_producto", "STRING", id_producto)
+                ]
+            )
+            
+            query_job1 = client.query(query1, job_config=job_config1)
+            df1 = query_job1.result().to_dataframe()
+            #print("Resultado query1:", df1.shape)
+
+            # Segunda query para obtener los datos restantes
+            #print("Ejecutando query2")
+            query2 = """
+                SELECT *
+                FROM `pakotinaikos.tfm_dataset.set_testeo`
+                WHERE Cliente = @cliente AND Punto_de_Venta = @punto_de_venta
+                LIMIT 1
+            """
+            
+            job_config2 = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("cliente", "STRING", cliente),
+                    bigquery.ScalarQueryParameter("punto_de_venta", "INT64", punto_de_venta)
+                ]
+            )
+            
+            query_job2 = client.query(query2, job_config=job_config2)
+            df2 = query_job2.result().to_dataframe()
+            #print("Resultado query2:", df2.shape)
+
+            # Desechar columnas no deseadas
+            columns_to_keep = [
+                'Cliente', 'Punto_de_Venta', 'Facturación_Total', 'Canal_de_Ventas', 'Numero_Puntos_de_Venta',
+                'Región', 'Segmento', 'Antigüedad', 'Población_500m', 'Población_2km', 'Puntos_de_Venta_Cercanos',
+                'Aparcamiento', 'Accesibilidad', 'Horas_Operación', 'Tipo_Zona', 'Historico 2023-01', 'Historico 2023-02', 'Historico 2023-03', 
+                'Historico 2023-04', 'Historico 2023-05', 'Historico 2023-06', 
+                'Historico 2023-07', 'Historico 2023-08', 'Historico 2023-09', 
+                'Historico 2023-10', 'Historico 2023-11', 'Historico 2023-12', 
+                'Historico 2024-1', 'Historico 2024-2', 'Historico 2024-3'
+            ]
+            df2 = df2[columns_to_keep]
+
+            # Rellenar los históricos con 0
+            historicos_cols = [col for col in df2.columns if 'Historico' in col]
+            df2[historicos_cols] = 0
+
+            # Combinar los resultados de las dos queries
+            combined_df = pd.concat([df1, df2], axis=1)
+            #print("DataFrame combinado:", combined_df.shape)
+            #print(combined_df.head())
+
+            # Reordenar las columnas para mantener el orden esperado
+            expected_order = [
+                'Id_Producto', 'Cliente', 'Punto_de_Venta', 'Familia', 'Subfamilia', 'Formato', 'Precio', 'Margen', 
+                'Cliente_Objetivo', 'Color', 'Material', 'Peso', 'Tamaño', 'Marca', 'País_Origen', 'Ventas_Base', 
+                'Facturación_Total', 'Canal_de_Ventas', 'Numero_Puntos_de_Venta', 'Región', 'Segmento', 'Antigüedad', 
+                'Población_500m', 'Población_2km', 'Puntos_de_Venta_Cercanos', 'Aparcamiento', 'Accesibilidad', 
+                'Horas_Operación', 'Tipo_Zona', 'Historico 2023-01', 'Historico 2023-02', 'Historico 2023-03', 
+                'Historico 2023-04', 'Historico 2023-05', 'Historico 2023-06', 
+                'Historico 2023-07', 'Historico 2023-08', 'Historico 2023-09', 
+                'Historico 2023-10', 'Historico 2023-11', 'Historico 2023-12', 
+                'Historico 2024-1', 'Historico 2024-2', 'Historico 2024-3'
+            ]
+
+            df_results = combined_df[expected_order]
+        
+        except Exception as e:
+            print("Error en las consultas adicionales:", e)
+            raise HTTPException(status_code=500, detail=f"Error en las consultas adicionales: {str(e)}")
+
+    return df_results
+
 
 @app.post("/predict")
 def predict_sales(data: InputData):
@@ -101,3 +183,7 @@ def predict_sales(data: InputData):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error in prediction: {e}")
+
+@app.get("/api")
+def read_root():
+    return {"message": "API is working."}

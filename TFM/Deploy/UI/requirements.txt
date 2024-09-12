@@ -2,3 +2,9 @@ streamlit
 requests
 pandas
 matplotlib
+pandas_gbq
+fastapi
+uvicorn
+google-cloud-bigquery
+joblib
+db-dtypes

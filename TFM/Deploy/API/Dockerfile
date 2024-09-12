@@ -1,25 +1,25 @@
-# Dockerfile for FastAPI app
+# Utilizar una imagen base de Python
 FROM python:3.9-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Create and set the working directory
+# Establecer el directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# Copiar los archivos necesarios al contenedor
+COPY app2.py /app/
+COPY xgb_model_v3.pkl /app/
+COPY scaler_v3.pkl /app/
+COPY ordinal_encoder_v3.pkl /app/
+COPY requirements.txt /app/
+COPY pakotinaikos-5b1bb10e7834.json /app/credentials-file.json  
+
+# Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the FastAPI app and other necessary files
-COPY app2.py .
-COPY xgb_model_v3.pkl .
-COPY scaler_v3.pkl .
-COPY ordinal_encoder_v3.pkl .
+# Establecer la variable de entorno para las credenciales de Google Cloud
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials-file.json"
 
-# Expose the port the app runs on
+# Exponer el puerto en el que se ejecutará la aplicación
 EXPOSE 8000
 
-# Run the FastAPI app
+# Comando para ejecutar la aplicación
 CMD ["uvicorn", "app2:app", "--host", "0.0.0.0", "--port", "8000"]

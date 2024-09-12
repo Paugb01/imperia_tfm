@@ -2,19 +2,21 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_gbq
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 # URL de la API
-API_URL = "http://localhost:8000/predict"
+API_URL = "http://34.79.144.132/predict"
 
 PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.jpg"
 
+# Configuración de la página
 st.set_page_config(
-    page_title="Mi Aplicación",
-    page_icon=":rocket:",
+    page_title="Imperia : Predicción de Ventas",
     layout="centered"  # También puedes usar "centered"
 )
+
+# Ubica image.png arriba de la página y cambia el color a azul oscuro
+st.image("./image.png", use_column_width=True, output_format="PNG", channels="BGR")
 # Título de la aplicación
 st.title("Sistema de Predicción de Ventas")
 
@@ -135,6 +137,8 @@ else:
                 with col2:
                     st.subheader("Datos del Punto de Venta")
                     st.write(pd.DataFrame(list(punto_de_venta_info.items()), columns=["Campo", "Valor"]).set_index("Campo"))
+                
+                st.markdown("<hr style='border: 1px solid black;'>", unsafe_allow_html=True)
 
                 st.header("Predicción de Ventas")
 
@@ -145,6 +149,9 @@ else:
                 historico_meses = historico_ventas["Meses"]
                 ventas_historicas = historico_ventas["Ventas"]
 
+                # Renombrar los meses para que tengan el formato deseado
+                historico_meses = [mes.replace("Historico ", "").replace("-", "/") for mes in historico_meses]
+
                 # Crear un DataFrame para la serie temporal
                 df = pd.DataFrame({
                     "Mes": historico_meses,
@@ -152,7 +159,7 @@ else:
                 })
 
                 # Agregar la predicción al final del historial
-                df = df.append({"Mes": f"{año}-{str(mes).zfill(2)}", "Ventas": result["Predicción_Ventas"]}, ignore_index=True)
+                df = pd.concat([df, pd.DataFrame({"Mes": [f"{año}/{str(mes).zfill(2)}"], "Ventas": [result["Predicción_Ventas"]]})], ignore_index=True)
 
                 # Graficar la evolución de las ventas
                 plt.figure(figsize=(10, 5))
@@ -168,6 +175,9 @@ else:
                 plt.legend()
 
                 st.pyplot(plt)
+
+                st.markdown("<hr style='border: 1px solid #FF6347;'>", unsafe_allow_html=True)
+                st.markdown("<h3>El producto en la industria</h3>", unsafe_allow_html=True)
 
                 # Query a BigQuery para obtener los datos necesarios
                 query = """
@@ -215,7 +225,60 @@ else:
                         <p style="font-size: 1em; color: #000;">Precio medio Producto {id_producto}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    
+                # Query a BigQuery para obtener la tendencia del histórico de ventas por ID_Producto
+                query_tendencia = """
+                SELECT Id_Producto, 
+                    SUM(`Historico 2023-01`) AS `Historico 2023-01`, 
+                    SUM(`Historico 2023-02`) AS `Historico 2023-02`, 
+                    SUM(`Historico 2023-03`) AS `Historico 2023-03`, 
+                    SUM(`Historico 2023-04`) AS `Historico 2023-04`, 
+                    SUM(`Historico 2023-05`) AS `Historico 2023-05`, 
+                    SUM(`Historico 2023-06`) AS `Historico 2023-06`, 
+                    SUM(`Historico 2023-07`) AS `Historico 2023-07`, 
+                    SUM(`Historico 2023-08`) AS `Historico 2023-08`, 
+                    SUM(`Historico 2023-09`) AS `Historico 2023-09`, 
+                    SUM(`Historico 2023-10`) AS `Historico 2023-10`, 
+                    SUM(`Historico 2023-11`) AS `Historico 2023-11`, 
+                    SUM(`Historico 2023-12`) AS `Historico 2023-12`, 
+                    SUM(`Historico 2024-1`) AS `Historico 2024-1`, 
+                    SUM(`Historico 2024-2`) AS `Historico 2024-2`
+                FROM `pakotinaikos.tfm_dataset.set_testeo`
+                WHERE Id_Producto = '{}'
+                GROUP BY Id_Producto
+                """.format(id_producto)
+
+                # Ejecutar la query y obtener los resultados
+                df_tendencia = pandas_gbq.read_gbq(query_tendencia, project_id="pakotinaikos")
+
+                # Obtener los meses y las ventas
+                meses = list(df_tendencia.columns[1:])
+                ventas = df_tendencia.iloc[0, 1:].values
+
+                # Convertir los nombres de los meses a un formato más legible
+                meses_convertidos = [
+                    mes.replace("Historico ", "").replace("-", "/")
+                    for mes in meses
+                ]
+
+                # Crear un DataFrame para la tendencia
+                df_tendencia = pd.DataFrame({
+                    "Mes": meses_convertidos,
+                    "Ventas": ventas
+                })
+
+                # Graficar la tendencia de ventas
+                plt.figure(figsize=(10, 5))
+                plt.plot(df_tendencia["Mes"], df_tendencia["Ventas"], marker='o', color='green', label='Tendencia de Ventas')
+                plt.title("Tendencia de Ventas")
+                plt.xlabel("Mes/Año")
+                plt.ylabel("Ventas")
+                plt.xticks(rotation=45)
+                plt.grid(True)
+
+                st.pyplot(plt)
+
+
+
             else:
                 st.error("Error en la API: " + response.text)
         else:

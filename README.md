@@ -24,8 +24,8 @@ Now you should be able to connect to the database through your SQL client, such 
   
 
 ## API Deployment (JAVI)
-Desde la carpeta TFM/Deploy, ejecutar `docker build -t modelo-ventas3 . ` para construir el contenedor y luego runear `docker run -p 5000:5000 modelo-ventas3` . Una vez hecho, se puede testear la API en http://127.0.0.1:5000 (localhost).
 
+Link : <<http://130.211.94.98:8501>> 
 
 ## Modelo XGBoost (MIGUEL)
 

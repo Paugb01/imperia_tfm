@@ -1,13 +1,14 @@
 import streamlit as st
 import requests
 import pandas as pd
-import pandas_gbq
 import matplotlib.pyplot as plt
+from google.cloud import bigquery
+
 
 # URL de la API
 API_URL = "http://34.79.144.132/predict"
 
-PRODUCT_IMAGE_URL = "https://pacolorente.es/wp-content/uploads/2022/07/simpleIV.jpg"
+PRODUCT_IMAGE_URL = "./simpleIV.jpg"
 
 # Configuración de la página
 st.set_page_config(
@@ -24,19 +25,45 @@ st.title("Sistema de Predicción de Ventas")
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Función para verificar las credenciales en BigQuery
+def verificar_credenciales(cliente_login, contraseña):
+    # Inicializa el cliente de BigQuery
+    client = bigquery.Client()
+
+    # Consulta SQL para verificar las credenciales
+    query = f"""
+        SELECT COUNT(1) AS usuario_valido
+        FROM `pakotinaikos.tfm_dataset.inicio_sesion`
+        WHERE Cliente = '{cliente_login}' AND Contrasena = '{contraseña}'
+    """
+
+    # Ejecuta la consulta
+    query_job = client.query(query)
+
+    # Recupera los resultados
+    result = query_job.result()
+
+    # Si existe al menos un registro, las credenciales son correctas
+    for row in result:
+        return row.usuario_valido > 0
+
 # Formulario de inicio de sesión
 if not st.session_state.authenticated:
     cliente_login = st.text_input("Cliente")
     contraseña = st.text_input("Contraseña", type="password")
     
     if st.button("Iniciar Sesión"):
-        # Aquí simplemente validamos cualquier input para demo
+        # Verificar credenciales con BigQuery
         if cliente_login and contraseña:
-            st.session_state.authenticated = True
-            st.session_state.cliente_login = cliente_login  # Guardar el cliente_login en session_state
-            st.success("Inicio de sesión exitoso")
+            credenciales_validas = verificar_credenciales(cliente_login, contraseña)
+            if credenciales_validas:
+                st.session_state.authenticated = True
+                st.session_state.cliente_login = cliente_login  # Guardar el cliente_login en session_state
+                st.success("Inicio de sesión exitoso")
+            else:
+                st.error("Credenciales inválidas")
         else:
-            st.error("Credenciales inválidas")
+            st.error("Por favor, introduce tanto el Cliente como la Contraseña.")
 else:
     # Aquí se muestra el contenido principal de la aplicación
     st.header("Datos de Entrada")
@@ -64,6 +91,7 @@ else:
             if response.status_code == 200:
                 # Obtener la respuesta y mostrar los resultados
                 result = response.json()
+
                 st.header("Resultados")
                 
                 # Separar el resultado en secciones
@@ -179,20 +207,11 @@ else:
                 st.markdown("<hr style='border: 1px solid #FF6347;'>", unsafe_allow_html=True)
                 st.markdown("<h3>El producto en la industria</h3>", unsafe_allow_html=True)
 
-                # Query a BigQuery para obtener los datos necesarios
-                query = """
-                SELECT Canal_de_Ventas, SUM(Ventas_Base) AS Ventas_Base_Total
-                FROM `pakotinaikos.tfm_dataset.set_testeo`
-                WHERE Id_Producto = '{}'
-                GROUP BY Canal_de_Ventas
-                """.format(id_producto)
+                # Distribución de Ventas
+                df_ventas = pd.DataFrame(result["Distribucion_Ventas"])
 
-                # Ejecutar la query y obtener los resultados
-                df_ventas = pandas_gbq.read_gbq(query, project_id="pakotinaikos")
-
-                # Crear el gráfico circular
                 fig, ax = plt.subplots(figsize=(6, 3))
-                ax.pie(df_ventas["Ventas_Base_Total"], labels=df_ventas["Canal_de_Ventas"], autopct='%1.1f%%')
+                ax.pie(df_ventas["Ventas_Base_Total"], labels=df_ventas["Canal_de_Ventas"], autopct='%1.1f%%', startangle=90)
                 ax.set_title("Nº Ventas por Canal de Ventas")
                 ax.axis('equal')
 
@@ -203,62 +222,25 @@ else:
                 with col1:
                     st.pyplot(fig)
 
-                # Query a BigQuery para obtener la media de 'Precio' por Id_Producto
-                query_precio = """
-                SELECT Id_Producto, AVG(Precio) AS Precio_Medio
-                FROM `pakotinaikos.tfm_dataset.set_testeo`
-                WHERE Id_Producto = '{}'
-                GROUP BY Id_Producto
-                """.format(id_producto)
-
-                # Ejecutar la query y obtener los resultados
-                df_precio = pandas_gbq.read_gbq(query_precio, project_id="pakotinaikos")
-
-                # Obtener el precio medio
-                precio_medio = df_precio["Precio_Medio"].values[0]
+                # Precio Medio
+                precio_medio = result["Precio_Medio"][0]["Precio_Medio"]
 
                 # Mostrar el precio medio en grande y formateado
                 with col2:
                     st.markdown(f"""
                     <div style="text-align: center;">
                         <h1 style="color: #FF6347;">{precio_medio:.2f} €</h1>
-                        <p style="font-size: 1em; color: #000;">Precio medio Producto {id_producto}</p>
+                        <p style="font-size: 1em; color: #000;">Precio medio Producto {result["Precio_Medio"][0]["Id_Producto"]}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                # Query a BigQuery para obtener la tendencia del histórico de ventas por ID_Producto
-                query_tendencia = """
-                SELECT Id_Producto, 
-                    SUM(`Historico 2023-01`) AS `Historico 2023-01`, 
-                    SUM(`Historico 2023-02`) AS `Historico 2023-02`, 
-                    SUM(`Historico 2023-03`) AS `Historico 2023-03`, 
-                    SUM(`Historico 2023-04`) AS `Historico 2023-04`, 
-                    SUM(`Historico 2023-05`) AS `Historico 2023-05`, 
-                    SUM(`Historico 2023-06`) AS `Historico 2023-06`, 
-                    SUM(`Historico 2023-07`) AS `Historico 2023-07`, 
-                    SUM(`Historico 2023-08`) AS `Historico 2023-08`, 
-                    SUM(`Historico 2023-09`) AS `Historico 2023-09`, 
-                    SUM(`Historico 2023-10`) AS `Historico 2023-10`, 
-                    SUM(`Historico 2023-11`) AS `Historico 2023-11`, 
-                    SUM(`Historico 2023-12`) AS `Historico 2023-12`, 
-                    SUM(`Historico 2024-1`) AS `Historico 2024-1`, 
-                    SUM(`Historico 2024-2`) AS `Historico 2024-2`
-                FROM `pakotinaikos.tfm_dataset.set_testeo`
-                WHERE Id_Producto = '{}'
-                GROUP BY Id_Producto
-                """.format(id_producto)
 
-                # Ejecutar la query y obtener los resultados
-                df_tendencia = pandas_gbq.read_gbq(query_tendencia, project_id="pakotinaikos")
-
-                # Obtener los meses y las ventas
-                meses = list(df_tendencia.columns[1:])
-                ventas = df_tendencia.iloc[0, 1:].values
+                # Tendencia Histórica
+                historico = result["Tendencia_Historico"][0]
+                meses = [f"{mes}" for mes in list(historico.keys())[1:]]
+                ventas = [historico[mes] for mes in meses]
 
                 # Convertir los nombres de los meses a un formato más legible
-                meses_convertidos = [
-                    mes.replace("Historico ", "").replace("-", "/")
-                    for mes in meses
-                ]
+                meses_convertidos = [mes.replace("Historico ", "").replace("-", "/") for mes in meses]
 
                 # Crear un DataFrame para la tendencia
                 df_tendencia = pd.DataFrame({
@@ -267,15 +249,16 @@ else:
                 })
 
                 # Graficar la tendencia de ventas
-                plt.figure(figsize=(10, 5))
-                plt.plot(df_tendencia["Mes"], df_tendencia["Ventas"], marker='o', color='green', label='Tendencia de Ventas')
-                plt.title("Tendencia de Ventas")
-                plt.xlabel("Mes/Año")
-                plt.ylabel("Ventas")
-                plt.xticks(rotation=45)
-                plt.grid(True)
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.plot(df_tendencia["Mes"], df_tendencia["Ventas"], marker='o', color='green', label='Tendencia de Ventas')
+                ax.set_title("Tendencia de Ventas")
+                ax.set_xlabel("Mes/Año")
+                ax.set_ylabel("Ventas")
+                ax.tick_params(axis='x', rotation=45)
+                ax.grid(True)
+                ax.legend()
 
-                st.pyplot(plt)
+                st.pyplot(fig)
 
 
 

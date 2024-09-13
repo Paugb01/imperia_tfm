@@ -122,10 +122,59 @@ def get_data_from_bigquery(id_producto: str, cliente: str, punto_de_venta: int):
 
     return df_results
 
+def get_additional_data(id_producto: str):
+    project_id = "pakotinaikos"
+    client = bigquery.Client(project=project_id)
+
+    # Consulta 1: Distribución de ventas por canal
+    query_ventas = f"""
+        SELECT Canal_de_Ventas, SUM(Ventas_Base) AS Ventas_Base_Total
+        FROM `pakotinaikos.tfm_dataset.set_testeo`
+        WHERE Id_Producto = '{id_producto}'
+        GROUP BY Canal_de_Ventas
+    """
+    df_ventas = client.query(query_ventas).result().to_dataframe()
+
+    # Consulta 2: Precio medio del producto
+    query_precio = f"""
+        SELECT Id_Producto, AVG(Precio) AS Precio_Medio
+        FROM `pakotinaikos.tfm_dataset.set_testeo`
+        WHERE Id_Producto = '{id_producto}'
+        GROUP BY Id_Producto
+    """
+    df_precio = client.query(query_precio).result().to_dataframe()
+
+    # Consulta 3: Tendencia del histórico de ventas
+    query_tendencia = f"""
+        SELECT Id_Producto, 
+            SUM(`Historico 2023-01`) AS `Historico 2023-01`, 
+            SUM(`Historico 2023-02`) AS `Historico 2023-02`, 
+            SUM(`Historico 2023-03`) AS `Historico 2023-03`, 
+            SUM(`Historico 2023-04`) AS `Historico 2023-04`, 
+            SUM(`Historico 2023-05`) AS `Historico 2023-05`, 
+            SUM(`Historico 2023-06`) AS `Historico 2023-06`, 
+            SUM(`Historico 2023-07`) AS `Historico 2023-07`, 
+            SUM(`Historico 2023-08`) AS `Historico 2023-08`, 
+            SUM(`Historico 2023-09`) AS `Historico 2023-09`, 
+            SUM(`Historico 2023-10`) AS `Historico 2023-10`, 
+            SUM(`Historico 2023-11`) AS `Historico 2023-11`, 
+            SUM(`Historico 2023-12`) AS `Historico 2023-12`, 
+            SUM(`Historico 2024-1`) AS `Historico 2024-1`, 
+            SUM(`Historico 2024-2`) AS `Historico 2024-2`
+        FROM `pakotinaikos.tfm_dataset.set_testeo`
+        WHERE Id_Producto = '{id_producto}'
+        GROUP BY Id_Producto
+    """
+    df_tendencia = client.query(query_tendencia).result().to_dataframe()
+
+    return df_ventas, df_precio, df_tendencia
+
+
 
 @app.post("/predict")
 def predict_sales(data: InputData):
     try:
+        # Obtener los datos del producto desde BigQuery
         df = get_data_from_bigquery(data.Id_Producto, data.Cliente, data.Punto_de_Venta)
         
         if df.empty:
@@ -175,11 +224,25 @@ def predict_sales(data: InputData):
         # Convertir la predicción a un tipo de dato compatible
         prediccion_ventas = round(float(prediction[0]))
 
+        # Consultar los datos adicionales
+        df_ventas, df_precio, df_tendencia = get_additional_data(data.Id_Producto)
+
+        # Convertir los DataFrames adicionales a diccionarios para incluirlos en la respuesta
+        ventas_data = df_ventas.to_dict(orient='records')
+        precio_data = df_precio.to_dict(orient='records')
+        tendencia_data = df_tendencia.to_dict(orient='records')
+
         # Convertir el DataFrame original a un diccionario y luego a JSON
         resultado_original = df_original.to_dict(orient='records')
 
-        return {"data": resultado_original,
-                "Predicción_Ventas": prediccion_ventas}
+        # Retornar la respuesta con los datos originales, predicción y datos adicionales
+        return {
+            "data": resultado_original,
+            "Predicción_Ventas": prediccion_ventas,
+            "Distribucion_Ventas": ventas_data,
+            "Precio_Medio": precio_data,
+            "Tendencia_Historico": tendencia_data
+        }
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error in prediction: {e}")

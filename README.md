@@ -67,7 +67,11 @@ After exploring various machine learning models, **XGBoost** was selected as the
 
 ## Architecture
 
-The project’s architecture is fully cloud-based, leveraging **Google Cloud Platform (GCP)** and managed workflows via **Cloud Composer (Apache Airflow)**. The architecture consists of the following components:
+The project’s architecture is fully cloud-based, leveraging **Google Cloud Platform (GCP)** and managed workflows via **Cloud Composer (Apache Airflow)**. 
+
+![architecture](./assets/architecture.png)
+
+The architecture consists of the following components:
 
 1. **Cloud Composer (Apache Airflow DAG)**:
    - Orchestrates the end-to-end data pipeline using a DAG with several tasks:

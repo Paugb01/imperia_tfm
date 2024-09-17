@@ -1,110 +1,125 @@
-# imperia_tfm
+# Sales Forecasting with Machine Learning
 
-### As for now TFM folder contains a very basic and provisional infrastructure that looks as follows:
-- imperia_db.sql script that creates three tables for the main data provided by Imperia. Further exploration is needed. 
-- Docker-compose.yml file setting up a PostgreSQL service relying on the adjacent Dockerfile.
-- Dockerfile.postgres file providing the initialisation scripts and the csv files.
-- A init_db.sh db intialisation file that loads the data onto the recently created tables.
+## Overview
 
-#### (Moreover you will find the csv files containing the data and a python notebook)
+This project, developed in collaboration with **Imperia** at **Marina de Empresas**, in partnership with **EDEM University**, focuses on creating a solution to **forecast sales** for the company's customers using a machine learning (ML) model. The project leverages **Google Cloud Platform (GCP)** infrastructure and incorporates **XGBoost** as the final model to generate accurate sales predictions. Below is an overview of the project's architecture, deployment, and future improvements.
 
-## How to deploy the db:
-Open up a new terminal inside TFM folder. (Creating a virtual environment is higly recommended atm and will become necessary soon.) Now start docker on your machine and run the following command: `docker compose up --build`
-Now this should be the last message shown on your terminal screen: `postgres_container  | 2024-07-03 10:03:36.648 UTC [1] LOG:  database system is ready to accept connections`
+---
 
-Now you should be able to connect to the database through your SQL client, such as DBeaver or similar. Generic .env should be created, though hidden on the repo which is not as for now. Check you're using the correct environment variable values. 
+## Table of Contents
 
-### There are still few issues to address:
-- The punto_venta table is not being loaded its data for problems related to the primary key.
-- A way of including all the data and csv files should be found.
+- [Sales Forecasting with Machine Learning](#sales-forecasting-with-machine-learning)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Data Handling and Preprocessing](#data-handling-and-preprocessing)
+    - [Preprocessing Steps:](#preprocessing-steps)
+  - [Machine Learning Models](#machine-learning-models)
+    - [Model Selection:](#model-selection)
+    - [Evaluation Metrics:](#evaluation-metrics)
+  - [Architecture](#architecture)
+    - [Technology Stack:](#technology-stack)
+  - [Deployment](#deployment)
+    - [Kubernetes Architecture:](#kubernetes-architecture)
+  - [Improvements and Future Challenges](#improvements-and-future-challenges)
+    - [Future Improvements:](#future-improvements)
+    - [Challenges:](#challenges)
+  - [Conclusion](#conclusion)
 
-## Next steps:
-- Connect the notebook to the database and start an EDA taking that connection as the input is the current idea.
-- Find feasible or more convenient alternatives to deploying a db. Otherwise, decide and implement the DB either on cloud or on local servers according to what might be more convenient. 
-  
+---
 
-## API Deployment (JAVI)
+## Data Handling and Preprocessing
 
-Link : <<http://130.211.94.98:8501>> 
+The data used for training the model is sourced from the company's customers. Since each customer provided data in various formats, the first step was to **homogenize** the datasets across the following attributes:
+- **Sales records** (sales, date),
+- **Point of Sale (POS)**,
+- **Customer information**,
+- **Product details** (including product features).
 
-## Modelo XGBoost (MIGUEL)
+### Preprocessing Steps:
+1. **Data Cleaning**:
+   - Removed inconsistent or incomplete records.
+   - Filtered out data from years with insufficient sales volume.
+   
+2. **Feature Engineering**:
+   - Created **lag features** to capture the time-dependent nature of sales data.
+   - Used **rolling averages** to smooth short-term fluctuations.
+   - Introduced **cyclic features** (e.g., day of the week, month, seasonality indicators).
 
-### 1. Carga de librerías y datos
+3. **Data Homogenization**:
+   - Standardized the data format across customers to ensure consistency during model training.
 
-En la primera parte del código, se realiza la carga de las librerías necesarias para el análisis y el modelado predictivo. Se utilizan las siguientes librerías:
+---
 
-- **pandas**: Para la manipulación y análisis de datos.
-- **numpy**: Para cálculos numéricos.
-- **scikit-learn**: Para el preprocesamiento de los datos, la división del dataset, y las métricas de evaluación.
-- **xgboost**: Para el entrenamiento del modelo de regresión basado en XGBoost.
-- **matplotlib**: Para la visualización de resultados.
+## Machine Learning Models
 
-Además, se carga el archivo `set_testeo_V2.csv`, que contiene las variables históricas de ventas y otras características categóricas y numéricas adicionales necesarias para el modelo.
+After exploring various machine learning models, **XGBoost** was selected as the final model due to its strong performance with structured, tabular data. Other models tested include **Linear Regression**, **ARIMA**, and **Random Forests**.
 
-### 2. Definir las columnas de interés
+### Model Selection:
+- **XGBoost**: Chosen for its ability to handle complex feature interactions and its suitability for medium-sized datasets.
+- **LSTMs (Long Short-Term Memory Networks)**: Initially considered but discarded due to the requirement of large amounts of data.
+- **ARIMA**: Tested for time series forecasting but struggled with the multi-dimensional dataset.
 
-Se define un conjunto de columnas que representan las ventas históricas de enero 2023 a enero 2024, las cuales serán utilizadas como variables predictoras para el entrenamiento del modelo. 
+### Evaluation Metrics:
+- **Root Mean Square Error (RMSE)**: To quantify the deviation of predicted values from actual sales figures.
+- **Mean Absolute Percentage Error (MAPE)**: To provide percentage-based accuracy, allowing comparison across different stores or products.
 
-Asimismo, se define la columna de febrero de 2024 como la variable objetivo (`target`) que el modelo intentará predecir. 
+---
 
-Además de las variables históricas, también se seleccionan variables categóricas como `Id_Producto`, `Cliente`, `Familia`, y `Punto_de_Venta`, y variables numéricas como `Precio`, `Margen`, y otras relacionadas con el entorno comercial.
+## Architecture
 
-### 3. Feature Engineering
+The project’s architecture is fully cloud-based, leveraging **Google Cloud Platform (GCP)** and managed workflows via **Cloud Composer (Apache Airflow)**. The architecture consists of the following components:
 
-Se implementan técnicas de ingeniería de características con el objetivo de mejorar la capacidad predictiva del modelo. Entre las técnicas exploradas se encuentran:
+1. **Cloud Composer (Apache Airflow DAG)**:
+   - Orchestrates the end-to-end data pipeline using a DAG with several tasks:
+     - **Data Check**: Verifies the presence of raw data in a **Google Cloud Storage (GCS)** bucket.
+     - **Data Processing**: Processes the data using **Dataflow** (Apache Beam), performing transformations and loading it into **BigQuery**.
+     - **Data Storage**: Stores the cleaned and transformed data in **BigQuery** for analysis and model training.
 
-- **Cálculo del promedio móvil**: Se calcula el promedio móvil de los últimos 3 meses de ventas históricas, que proporciona una visión suavizada de la tendencia de ventas.
-- **Interacción entre variables**: Se crea una nueva característica que es el producto entre el `Precio` y el `Margen`, lo cual permite capturar la interacción entre ambas variables y su posible influencia en las ventas futuras.
+2. **Model Training**:
+   - Data stored in BigQuery is accessed by data scientists to train the machine learning model. The final model (XGBoost) is stored in a **GCS bucket** for future use.
 
-Aunque estas nuevas características fueron comentadas en el código final, el objetivo es demostrar cómo pueden crearse características adicionales relevantes para el modelo.
+### Technology Stack:
+- **Languages**: Python (for scripting and modeling), SQL (for querying data in BigQuery).
+- **Services**: GCS, Dataflow, BigQuery, Cloud Composer.
 
-### 4. Preprocesamiento de datos
+---
 
-El preprocesamiento es una fase crucial donde se preparan los datos para el entrenamiento del modelo:
+## Deployment
 
-- Se reemplazan los valores faltantes (`NaN`) en las columnas históricas por 0. Esta operación asegura que no haya valores faltantes que puedan afectar negativamente el modelo.
-- Se definen las variables predictoras (X) y la variable objetivo (y).
-- Las variables categóricas se transforman en valores numéricos utilizando el `OrdinalEncoder`. De esta forma, el modelo puede interpretar correctamente la información categórica.
-- Se verifica que las variables categóricas han sido correctamente convertidas a tipo numérico para su uso en el modelo de predicción.
+Deployment is handled through a **Kubernetes cluster** with three nodes. The architecture includes two key pods:
 
-### 5. Eliminación de outliers
+1. **UI Pod**:
+   - Runs a **Streamlit-based UI** that allows users to interact with the system by uploading new data and retrieving sales forecasts.
 
-Para mejorar la calidad de los datos, se eliminan los valores atípicos o outliers. La técnica empleada es el rango intercuartílico (IQR), que identifica y filtra los datos que se encuentran fuera de 1.5 veces el IQR. Esto se aplica tanto a las columnas históricas como a las variables numéricas, reduciendo la influencia negativa de valores atípicos en el modelo.
+2. **API Pod**:
+   - Hosts the **API** that queries the trained ML model stored in the GCS bucket to perform predictions. This pod is responsible for handling model inference and serving the prediction results to the UI pod.
 
-### 6. División de los datos en entrenamiento y validación
+### Kubernetes Architecture:
+- **Nodes**: Three nodes to ensure scalability and availability.
+- **Pods**:
+   - **Streamlit Pod**: User interface for interacting with the sales forecasting system.
+   - **API Pod**: Handles requests from the UI and runs the sales forecast model.
 
-El conjunto de datos se divide en dos subconjuntos:
+---
 
-- **Conjunto de entrenamiento**: El 80% de los datos, que se utiliza para entrenar el modelo.
-- **Conjunto de validación**: El 20% de los datos, que se utiliza para validar el rendimiento del modelo y evitar problemas de sobreajuste (overfitting).
+## Improvements and Future Challenges
 
-Esta división es importante para evaluar cómo se generaliza el modelo a nuevos datos no vistos durante el entrenamiento.
+### Future Improvements:
+1. **Vertex AI Integration**:
+   - We plan to integrate **Vertex AI** to automate model training and deployment. This will be achieved by adding **Vertex AI Airflow operators** to our workflow.
+   - By connecting the workflow with **Vertex AI endpoints**, we will streamline the deployment of models, allowing for seamless updates and version control.
 
-### 7. Normalización de las variables numéricas
+2. **Enhanced Training Pipelines**:
+   - Automating the model training process using **Vertex AI pipelines** will enable continuous improvement and quicker iteration on models.
 
-Las variables numéricas se normalizan utilizando el `RobustScaler`, que es particularmente útil cuando se trata de datos con outliers, ya que utiliza los cuartiles en lugar de la media y la desviación estándar. Esta normalización garantiza que todas las variables numéricas tengan la misma escala, mejorando así la eficiencia del entrenamiento del modelo.
+### Challenges:
+- **Data Availability**:
+   - One of the biggest challenges we face is the **lack of sufficient data** from certain customers. This limits the model’s ability to generate accurate predictions. Over time, with better data collection and organization, this can be addressed.
+   - Collaborating with customers to improve data consistency and volume will be a key focus moving forward.
 
-### 8. Entrenamiento del modelo XGBoost
+---
 
-Se entrena un modelo de regresión utilizando XGBoost, que es un algoritmo de boosting basado en árboles de decisión. Para optimizar el modelo, se utiliza `GridSearchCV` para buscar los mejores hiperparámetros posibles, como la tasa de aprendizaje (`learning_rate`), el número de estimadores (`n_estimators`), la profundidad de los árboles (`max_depth`), entre otros.
+## Conclusion
 
-Además, se implementa una métrica de evaluación personalizada que combina el error cuadrático medio (RMSE) y el error porcentual absoluto medio (MAPE). Esto permite un balance entre precisión y robustez en el modelo.
+This project represents a scalable and cloud-native solution for sales forecasting, leveraging machine learning to provide valuable insights to the company’s customers. Through continuous improvements such as the integration of Vertex AI and enhanced data collection, the system will become even more accurate and robust in the future.
 
-Los hiperparámetros optimizados se seleccionan tras ejecutar una búsqueda exhaustiva (GridSearch), y se utiliza el mejor modelo para hacer predicciones en el conjunto de validación. Finalmente, se calculan y reportan los valores de RMSE y MAPE para evaluar el rendimiento del modelo.
-
-### 9. Evaluación del modelo
-
-Se evalúa el rendimiento del modelo tanto en el conjunto de entrenamiento como en el conjunto de validación utilizando las métricas de RMSE y MAPE. Estas métricas permiten cuantificar el error entre las predicciones del modelo y los valores reales:
-
-- **RMSE (Root Mean Squared Error)**: Es una métrica que penaliza los errores grandes de manera más severa, útil para medir la precisión de las predicciones.
-- **MAPE (Mean Absolute Percentage Error)**: Mide el error en términos porcentuales, lo cual es útil cuando se quiere entender el error relativo.
-
-El objetivo de esta evaluación es comprobar si el modelo está ajustado adecuadamente y si existe algún indicio de sobreajuste o subajuste (overfitting o underfitting).
-
-### 10. Importancia de las variables
-
-Se analiza la importancia de las variables que influyen en el modelo de XGBoost. Para ello, se extrae la importancia de cada característica basada en el número de veces que se utiliza para dividir los nodos en los árboles de decisión del modelo.
-
-Posteriormente, se crea una visualización con un gráfico de barras donde se muestra el porcentaje de importancia de cada variable. Esto permite identificar cuáles son las características más relevantes que el modelo utiliza para predecir la variable objetivo.
-
-Esta etapa es fundamental para entender las relaciones entre las variables y las predicciones realizadas por el modelo, proporcionando una mayor interpretabilidad y justificación para las decisiones tomadas en el modelo.

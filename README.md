@@ -103,6 +103,10 @@ Deployment is handled through a **Kubernetes cluster** with three nodes. The arc
 - **Pods**:
    - **Streamlit Pod**: User interface for interacting with the sales forecasting system.
    - **API Pod**: Handles requests from the UI and runs the sales forecast model.
+ 
+### Demo Example
+[![Video en YouTube](https://img.youtube.com/vi/E7NA-QFRcjY/0.jpg)](https://youtu.be/E7NA-QFRcjY?si=pC-3P6x4yg-vsDty)
+
 
 ---
 
